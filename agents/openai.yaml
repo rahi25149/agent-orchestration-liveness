@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Orchestration Liveness"
+  short_description: "Detect stalled multi-agent work and restore handoffs"
+  default_prompt: "Use $agent-orchestration-liveness to monitor a long-running multi-agent workflow and recover stalled handoffs."
