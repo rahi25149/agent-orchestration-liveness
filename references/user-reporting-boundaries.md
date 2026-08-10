@@ -74,6 +74,18 @@ Inspect the architect's user-facing updates once from the previous communication
 
 Do not infer communication health from the current state card, a single latest message, or one compact task snapshot. If the platform cannot expose the interval, record the communication audit as `NOT_RUN`; do not claim there was no lifecycle leakage.
 
+Record the audit in this compact form:
+
+```text
+Communication audit:
+Window:
+Source:
+Observed delta:
+Result: CLEAR | YELLOW | NOT_RUN
+```
+
+The record is not proof by itself. Use `CLEAR` only after actually reading the architect's user-facing updates across the stated interval. If only a state card, worker summary, or latest message is available, use `NOT_RUN`; do not infer a clear interval from the absence of evidence.
+
 Compare each visible update with the previously reported objective, gate, material risk, user decision need, and completion layer. Message volume can support the judgment but is never the sole criterion.
 
 The supervisor uses a combined judgment, not a raw message-count limit. Raise a communication `YELLOW` when current facts show one of these patterns:

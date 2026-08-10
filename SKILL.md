@@ -136,6 +136,8 @@ Let the supervisor audit lifecycle leakage, repeated user updates without a user
 
 When auditing communication health, sample the architect's user-facing updates since the previous communication-review boundary. A current state card or single latest snapshot cannot prove that lifecycle leakage did not occur. If the interval history is unavailable, mark the communication audit `NOT_RUN` and do not claim that reporting is clear.
 
+Include one compact communication-audit record in every interval supervision card: `window`, `source`, `observed_delta`, and `result` (`CLEAR`, `YELLOW`, or `NOT_RUN`). The record is mandatory even when the overall liveness result is `GREEN`; omitting it leaves the review incomplete. `CLEAR` requires actually reading the architect's user-facing updates across the declared interval. Merely emitting the fields, reading the current state card, or reading one latest snapshot is not evidence. If interval history cannot be read, use `NOT_RUN` and make no communication-health claim.
+
 Before establishing or auditing user-facing reporting for a long-running workflow, read [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md) completely. Let the active user request, project contract, or current objective declare any exact cadence or completion boundary; do not impose a universal interval.
 
 ## Track supervisor findings to closure
@@ -206,6 +208,7 @@ Keep one internal supervision card with:
 - explicit wait and deadline;
 - duplicate, conflict, or direction mismatch;
 - smallest sampled evidence;
+- communication audit: window, interval-history source, observed user-visible delta, and `CLEAR`, `YELLOW`, or `NOT_RUN`;
 - open supervisor findings and response boundary;
 - material waste and one correction, only if present;
 - next safe action;
