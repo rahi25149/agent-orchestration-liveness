@@ -134,6 +134,8 @@ Make the architect the communication compression layer:
 
 Let the supervisor audit lifecycle leakage, repeated user updates without a user-visible delta, and material changes left unreported. A communication `YELLOW` corrects future reporting only; it does not approve wording, pause engineering, or let the supervisor define new user-visible completion boundaries.
 
+When auditing communication health, sample the architect's user-facing updates since the previous communication-review boundary. A current state card or single latest snapshot cannot prove that lifecycle leakage did not occur. If the interval history is unavailable, mark the communication audit `NOT_RUN` and do not claim that reporting is clear.
+
 Before establishing or auditing user-facing reporting for a long-running workflow, read [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md) completely. Let the active user request, project contract, or current objective declare any exact cadence or completion boundary; do not impose a universal interval.
 
 ## Track supervisor findings to closure

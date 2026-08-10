@@ -68,6 +68,14 @@ Prefer one merged paragraph when the result is simpler than the template.
 
 ## Audit communication health
 
+### Establish the evidence window
+
+Inspect the architect's user-facing updates once from the previous communication-audit boundary to now. On the first audit, use the start of the supervised interval or the most recent known user-reporting boundary. Exclude worker-to-architect traffic and other internal orchestration unless it is needed to classify a visible update.
+
+Do not infer communication health from the current state card, a single latest message, or one compact task snapshot. If the platform cannot expose the interval, record the communication audit as `NOT_RUN`; do not claim there was no lifecycle leakage.
+
+Compare each visible update with the previously reported objective, gate, material risk, user decision need, and completion layer. Message volume can support the judgment but is never the sole criterion.
+
 The supervisor uses a combined judgment, not a raw message-count limit. Raise a communication `YELLOW` when current facts show one of these patterns:
 
 - a sequence of user updates consists only of worker starts, tests, review cycles, repairs, commits, or re-dispatch, without an objective, risk, decision, or completion-layer change;
