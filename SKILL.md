@@ -122,6 +122,20 @@ Require the architect to acknowledge the packet and do exactly one of these:
 
 A worker tool call ending without this handoff is not an orchestration close. If a completion packet is readable but transport delivery is ambiguous, treat the result as received and flag only the missing architect acknowledgement. Never duplicate work, tests, orders, or machine actions merely to test messaging.
 
+## Separate internal orchestration from user reporting
+
+Keep worker-to-architect communication fast and truthful, but do not mirror internal lifecycle events into the user conversation. Worker progress, failures, completion packets, architect acknowledgements, review cycles, repairs, and re-dispatch remain internal unless they cross a user-reporting boundary.
+
+Make the architect the communication compression layer:
+
+- update the user when the objective or gate changes, a material risk changes, a real `USER_WAIT` or `RED` appears, the user's requested reporting boundary arrives, or an already-declared user-visible completion boundary is proven;
+- maintain only `last_user_update_at` and `last_user_visible_change` as lightweight reporting state; do not require a pending-message queue;
+- escalate blockers, data anomalies, safety risks, and inability to continue to the architect without delay, even while normal user-facing progress is being batched.
+
+Let the supervisor audit lifecycle leakage, repeated user updates without a user-visible delta, and material changes left unreported. A communication `YELLOW` corrects future reporting only; it does not approve wording, pause engineering, or let the supervisor define new user-visible completion boundaries.
+
+Before establishing or auditing user-facing reporting for a long-running workflow, read [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md) completely. Let the active user request, project contract, or current objective declare any exact cadence or completion boundary; do not impose a universal interval.
+
 ## Track supervisor findings to closure
 
 Give every actionable supervisor finding a stable ID such as `SUP-001` and record:
@@ -156,7 +170,7 @@ Supervisor output is advisory: the supervisor identifies risk, conditions, and d
 
 Use both review modes:
 
-- **Heartbeat review**: monitor long-running work at the user's cadence; otherwise default to 30 minutes.
+- **Heartbeat review**: monitor long-running work at the cadence declared by the user or project. If none is declared, choose a cadence that matches the task's expected progress boundary instead of imposing a universal interval.
 - **Event-driven review**: review after a goal or business-gate change, creation of a possibly unrelated task, transition from smoke check to a full or real flow, completion of a real business chain, a high-risk or irreversible action, integration, deployment, or a milestone-completion claim.
 
 At a heartbeat, read the latest state card and recent handoffs once, compare them with the previous boundary, and remain silent when work is relevant and healthy. Do not poll rapidly or micromanage a running worker. At an event review, inspect only facts needed for that transition.
@@ -196,7 +210,7 @@ Keep one internal supervision card with:
 - whether the user is required and why;
 - `GREEN`, `YELLOW`, or `RED`.
 
-Notify the architect for `YELLOW` or `RED`. Notify the user only for `RED`, a real `USER_WAIT`, or an explicitly requested periodic report. Do not turn `GREEN` heartbeats or routine worker activity into user-facing chatter.
+Notify the architect for `YELLOW` or `RED`. Notify the user only at the boundaries defined above: an objective or gate change, a material risk change, a real `USER_WAIT` or `RED`, an explicitly requested report, or a declared user-visible completion boundary. Do not turn `GREEN` heartbeats or routine worker activity into user-facing chatter.
 
 ## Reject orchestration anti-patterns
 
