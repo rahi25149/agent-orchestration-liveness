@@ -140,6 +140,49 @@ Require the architect to respond with one of:
 
 Carry unresolved findings across heartbeats until accepted work closes them or current evidence makes them obsolete. Do not restate a closed finding, multiply IDs for the same fact, or let the supervisor block unrelated work while awaiting a response.
 
+## Use explicit architect-supervisor exchange templates
+
+Use stable field templates so that a review decision and its acknowledgement cannot disappear inside free-form status prose. Keep each field short and include only current facts.
+
+For an architect-to-supervisor event review request, send:
+
+```text
+<REVIEW_KIND>
+Current gate:
+Trigger and decision requested:
+Facts changed since the last review:
+Owners, hotspots, and exclusive operator:
+Highest completion layer actually proven:
+Known gap or explicitly non-blocking debt:
+Proposed next action and first-stable-failure stop:
+Return requested: GREEN / YELLOW / RED, decision, and necessary conditions.
+```
+
+Use review kinds that describe the transition rather than the implementation, such as `PRE_REAL_FLOW_REVIEW`, `POST_REAL_FLOW_REVIEW`, `INTEGRATION_REVIEW`, `PRE_RELEASE_REVIEW`, or `MILESTONE_COMPLETION_REVIEW`. Project-specific contracts may define narrower names.
+
+For a new supervisor finding, send exactly one compressed line:
+
+```text
+Finding ID | Level | Core issue | Minimal current evidence | One correction | Latest response gate
+```
+
+For the architect's formal response, send:
+
+```text
+Finding ID:
+Disposition: ACCEPTED | PARTIALLY_ACCEPTED | REJECTED_WITH_EVIDENCE
+Fact basis:
+Action and owner, or evidence-backed reason for no action:
+Updated current gate:
+User required: yes/no and stable reason
+```
+
+For an unresolved finding whose facts change before closure, send a compact status update containing the finding ID, changed fact, whether the original correction remains in force, and the next boundary. For closure, name the single current fact that closes it.
+
+For a `GREEN` event review with no finding, reply only with the level, decision, necessary conditions, and whether the requested transition is allowed. Do not create an empty supervisor finding merely to acknowledge a healthy transition.
+
+Do not copy large logs, process lists, revisions, hashes, or repeated history into these templates. Include such identifiers only when they are the smallest fact needed for the current decision.
+
 ## Use heartbeat and event-driven reviews
 
 Use both review modes:
