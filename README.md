@@ -2,6 +2,8 @@
 
 This skill coordinates long-running architect-worker-supervisor workflows while keeping ownership, liveness, completion claims, user reporting, and independent supervision distinct.
 
+[中文说明](README.zh-CN.md)
+
 ## What this update adds
 
 - **Outcome batches:** group work only when it serves one externally verifiable result and one shared pass/fail acceptance boundary.
