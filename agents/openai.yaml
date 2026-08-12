@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Orchestration Liveness"
-  short_description: "Supervise direction, liveness, and agent handoffs"
-  default_prompt: "Use $agent-orchestration-liveness to supervise a long-running architect-worker workflow, detect off-goal activity or broken handoffs, and restore closed-loop progress."
+  short_description: "Supervise long-running outcome batches and handoffs"
+  default_prompt: "Use $agent-orchestration-liveness to coordinate a long-running architect-worker-supervisor workflow, keep outcome batches alive, deduplicate reviews, and report the highest completion layer actually proven."

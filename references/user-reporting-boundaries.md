@@ -19,6 +19,8 @@ These events update the current state card and inform architect decisions. They 
 
 Merge internal facts into one current-state update only when they cross a user-reporting boundary. Describe the objective, user-visible change, material risk, required decision, or proven completion layer. Do not replay worker lifecycle events.
 
+Use the outcome batch and material delta defined in [Outcome Batching and Review Budget](outcome-batching-and-review-budget.md) to decide whether a new user-reporting boundary exists. Same-batch repairs, technical reviews, tests, and internal owner handoffs do not create one automatically.
+
 ## Maintain only two reporting facts
 
 The architect keeps:
@@ -74,17 +76,21 @@ Inspect the architect's user-facing updates once from the previous communication
 
 Do not infer communication health from the current state card, a single latest message, or one compact task snapshot. If the platform cannot expose the interval, record the communication audit as `NOT_RUN`; do not claim there was no lifecycle leakage.
 
-Record the audit in this compact form:
+Record exactly one compact audit status in every interval supervision card:
 
 ```text
 Communication audit:
-Window:
-Source:
-Observed delta:
-Result: CLEAR | YELLOW | NOT_RUN
+Status: NO_NEW_UPDATES | CHECKED | NOT_RUN
+Window:                         # required for NO_NEW_UPDATES or CHECKED
+Source:                         # required for NO_NEW_UPDATES or CHECKED
+Delta: none | objective | risk | decision | completion  # CHECKED only
+Result: CLEAR | YELLOW          # CHECKED only
+Reason:                         # NOT_RUN only
 ```
 
-The record is not proof by itself. Use `CLEAR` only after actually reading the architect's user-facing updates across the stated interval. If only a state card, worker summary, or latest message is available, use `NOT_RUN`; do not infer a clear interval from the absence of evidence.
+Use `NO_NEW_UPDATES` only after actually querying the declared interval and confirming that it contains no architect user-facing update. Use `CHECKED` only after reading every architect update in that interval. If only a state card, worker summary, architect self-report, or latest message is available, use `NOT_RUN`; do not infer a clear interval from the absence of evidence.
+
+Keep `NO_NEW_UPDATES` and `CHECKED/CLEAR` internal. Do not render the full audit to the user merely because the interval card requires the field.
 
 Compare each visible update with the previously reported objective, gate, material risk, user decision need, and completion layer. Message volume can support the judgment but is never the sole criterion.
 

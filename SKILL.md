@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration-liveness
-description: Supervise and recover liveness, direction, handoffs, and truthful progress in long-running architect-worker-supervisor or multi-thread Codex workflows. Use when work spans hours, agents run on multiple machines, completion handoffs can be missed, recurring heartbeats are needed, or active threads may drift away from the current business gate without closing useful work. Do not use for short single-agent tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
+description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, outcome batching, deduplicated event review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
 ---
 
 # Agent Orchestration Liveness and Independent Supervision
@@ -9,9 +9,9 @@ description: Supervise and recover liveness, direction, handoffs, and truthful p
 
 Keep these authorities separate:
 
-- **Architect**: own the current goal, business gate, priorities, task ownership, product and architecture decisions, integration, and acceptance. Dispatch bounded work and acknowledge its result. Do not become the routine implementation worker.
+- **Architect**: own the current goal, business gate, priorities, task ownership, product and architecture decisions, integration, and acceptance. Dispatch bounded work and acknowledge its result. Enter direct execution only for one declared blocking hypothesis or one atomic integration action; state the minimal scope, stop condition, and handoff target, then exit when the blocker clears, the first stable failure appears, the scope must expand, or a worker can take over. Do not become the routine implementation worker or starve acknowledgements, dispatch, or integration decisions.
 - **Worker**: own one bounded assignment and its declared hotspot. Execute autonomously inside that scope, stop at the first stable failure, and report current facts. Do not silently widen the assignment or claim a higher completion layer than the evidence supports.
-- **Supervisor**: independently audit goal alignment, liveness, ownership, conflicts, truthful claims, and avoidable waste. Stay read-only. Do not assign workers, choose implementation details, operate machines, edit artifacts, or become a second architect.
+- **Supervisor**: independently audit goal alignment, liveness, ownership, conflicts, truthful claims, and avoidable waste. Stay read-only. Do not assign workers, choose implementation details, operate machines, edit artifacts, or become a second architect. When a technical reviewer already covers the current candidate, verify review coverage, integration, freshness, and completion-layer truth instead of repeating routine code review.
 
 Keep ordinary commit-level code review, test review, and defect adjudication in a separate technical-review workflow. If the supervisor happens to notice a material safety, funds, data-integrity, or current-gate defect, record it and route it to the appropriate reviewer instead of expanding into a continuing code review.
 
@@ -21,9 +21,10 @@ Record only the live facts needed to supervise the workflow:
 
 - architect and supervisor thread IDs;
 - active worker thread IDs and bounded assignments;
+- outcome-batch ID, externally verifiable outcome, and shared pass/fail acceptance boundary;
 - current business gate and its acceptance condition;
 - active owner and write hotspot for each assignment;
-- expected next progress boundary or bounded completion time;
+- next observable checkpoint for each active assignment;
 - explicit external waits, deadlines, and user dependencies;
 - sole physical-machine or device operator, if exclusivity applies;
 - last meaningful state change and timestamp;
@@ -48,7 +49,11 @@ Give each worker one compact work order containing:
 7. first-stable-failure stop condition;
 8. required completion packet.
 
-Prefer the smallest task that closes a dependency or reduces the largest current uncertainty. Dispatch independent tasks in parallel when they own different hotspots. Preserve one executable owner for an exclusive physical machine, device, account, or other non-concurrent resource.
+Prefer the smallest task that closes a dependency or reduces the largest current uncertainty. When approaching a user-visible milestone, prioritize a bounded vertical assignment that completes one end-to-end user outcome over additional isolated capability slices, unless a declared dependency or material risk must be resolved first. Dispatch independent tasks in parallel when they own different hotspots. Preserve one executable owner for an exclusive physical machine, device, account, or other non-concurrent resource.
+
+Define one outcome batch by one externally verifiable outcome and one shared acceptance boundary. Multiple workers, hotspots, or dependency chains may participate only when they are required to pass that boundary. Keep ordinary repairs, technical reviews, and internal owner handoffs inside the batch; they may be re-dispatched internally but do not automatically create a new review, integration claim, or user-reporting boundary.
+
+Before creating, merging, splitting, pausing, or closing an outcome batch; deciding whether a lifecycle event merits a new review; mapping a technical review to a completion layer; entering a bounded architect execution mode; or reconciling findings at gate closure, read [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md) completely.
 
 Do not add a Worktree, release artifact, hash chain, repeated preflight, approval step, or user reply phrase unless the actual assignment requires it. Do not ask the user to foreground a window, click an ordinary control, or repeat a fixed confirmation when available automation can perform the action safely.
 
@@ -56,8 +61,8 @@ Do not add a Worktree, release artifact, hash chain, repeated preflight, approva
 
 Assign exactly one liveness state:
 
-- `ACTIVE_WORK`: A named owner is executing a task that advances the current gate or removes a declared dependency, with a bounded next progress boundary.
-- `BOUNDED_WAIT`: A named external operation or observation is still inside its declared deadline.
+- `ACTIVE_WORK`: A named owner is executing a task that advances the current gate or removes a declared dependency, with a next observable checkpoint.
+- `BOUNDED_WAIT`: A named non-user operation, observation, or dependency is still inside its declared boundary.
 - `USER_WAIT`: Progress truly requires unresolved identity, login or verification, desktop unlock, UAC, physical input, new credentials or permissions, funds, or production authority.
 - `STALLED`: The gate is incomplete, a safe relevant next action exists, and no owner is executing or acknowledging it.
 - `COMPLETED`: The declared gate and all required handoffs are closed.
@@ -76,6 +81,8 @@ Do not classify these as stalled:
 
 Do not classify owned, reversible development operations as `USER_WAIT`. Evidence required is not approval required.
 
+Before declaring `USER_WAIT`, inspect available authorization context, reversibility, current owner capability, and whether the action truly needs a new identity, login, verification, credential, permission, physical input, funds, or production authority. Do not require every project to create a new authorization ledger. If an avoidable interactive-runtime interruption currently requires a user action, record the immediate `USER_WAIT` separately from the orchestration `YELLOW` that explains the preventable interruption.
+
 ## Separate completion layers
 
 State completion at the highest layer actually proven:
@@ -85,6 +92,10 @@ State completion at the highest layer actually proven:
 - **user-capability complete**: the intended user-visible or real-environment outcome was observed under its acceptance conditions.
 
 Never use a lower layer to imply a higher one. A mock, simulator, unit test, process start, or API response is not automatically a real device, real funds, real user flow, or full business result.
+
+A technical-review `CLEAR` proves only the reviewed layer. When a higher completion claim depends on a browser, desktop, device, remote session, or other runtime surface, run a representative real-surface probe at the first executable thin slice and before scaling a second full branch or dependent implementation on that surface. Until observed, cap the completion layer at engineering or local integration as supported by the evidence.
+
+For any long-lived browser, desktop, device, remote-session, or interactive automation task; the first executable surface probe; runtime keepalive or interruption handling; a possible interactive `USER_WAIT`; or runtime cleanup, read [Interactive Runtime Lifecycle](references/interactive-runtime-lifecycle.md) completely.
 
 ## Audit direction and closed-loop throughput
 
@@ -106,7 +117,7 @@ Do not invent waste or a correction to fill a report field. Record them only whe
 
 Require each worker to finish with one compact packet:
 
-- assignment ID and current gate;
+- assignment ID, outcome-batch ID, current gate, and shared acceptance boundary;
 - result and changed state;
 - highest completion layer proven;
 - first stable failure, if any;
@@ -122,6 +133,8 @@ Require the architect to acknowledge the packet and do exactly one of these:
 
 A worker tool call ending without this handoff is not an orchestration close. If a completion packet is readable but transport delivery is ambiguous, treat the result as received and flag only the missing architect acknowledgement. Never duplicate work, tests, orders, or machine actions merely to test messaging.
 
+Keep a same-batch repair packet inside the existing lifecycle. A repair completion may require a new owner or technical review, but it does not by itself create a new batch, event review, integration announcement, or user update.
+
 ## Separate internal orchestration from user reporting
 
 Keep worker-to-architect communication fast and truthful, but do not mirror internal lifecycle events into the user conversation. Worker progress, failures, completion packets, architect acknowledgements, review cycles, repairs, and re-dispatch remain internal unless they cross a user-reporting boundary.
@@ -136,7 +149,13 @@ Let the supervisor audit lifecycle leakage, repeated user updates without a user
 
 When auditing communication health, sample the architect's user-facing updates since the previous communication-review boundary. A current state card or single latest snapshot cannot prove that lifecycle leakage did not occur. If the interval history is unavailable, mark the communication audit `NOT_RUN` and do not claim that reporting is clear.
 
-Include one compact communication-audit record in every interval supervision card: `window`, `source`, `observed_delta`, and `result` (`CLEAR`, `YELLOW`, or `NOT_RUN`). The record is mandatory even when the overall liveness result is `GREEN`; omitting it leaves the review incomplete. `CLEAR` requires actually reading the architect's user-facing updates across the declared interval. Merely emitting the fields, reading the current state card, or reading one latest snapshot is not evidence. If interval history cannot be read, use `NOT_RUN` and make no communication-health claim.
+Include one compact internal `communication_audit` record in every interval supervision card. Use exactly one status:
+
+- `NO_NEW_UPDATES`: actually query the user-facing interval and confirm it contains no new architect updates; record `window` and `source`.
+- `CHECKED`: actually read the interval; record `window`, `source`, `delta` (`none`, `objective`, `risk`, `decision`, or `completion`), and `result` (`CLEAR` or `YELLOW`).
+- `NOT_RUN`: interval history is unavailable, the read failed, or only a latest snapshot is visible; record the stable reason and make no communication-health claim.
+
+The field is mandatory even when liveness is `GREEN`, but the expanded template is not. Keep `NO_NEW_UPDATES` and `CHECKED/CLEAR` internal and silent to the user. A current state card, one latest message, or an architect self-report cannot support `NO_NEW_UPDATES` or `CHECKED/CLEAR`.
 
 Before establishing or auditing user-facing reporting for a long-running workflow, read [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md) completely. Let the active user request, project contract, or current objective declare any exact cadence or completion boundary; do not impose a universal interval.
 
@@ -148,7 +167,7 @@ Give every actionable supervisor finding a stable ID such as `SUP-001` and recor
 - the smallest supporting fact;
 - severity and concrete consequence;
 - the required architect response boundary;
-- current disposition and closure fact.
+- finding state (`OPEN`, `CLOSED`, or `SUPERSEDED`), architect disposition, next-check boundary, and any terminal fact.
 
 Require the architect to respond with one of:
 
@@ -156,7 +175,9 @@ Require the architect to respond with one of:
 - `PARTIALLY_ACCEPTED`: state the accepted portion and evidence-backed boundary;
 - `REJECTED_WITH_EVIDENCE`: provide the minimal current fact that invalidates it.
 
-Carry unresolved findings across heartbeats until accepted work closes them or current evidence makes them obsolete. Do not restate a closed finding, multiply IDs for the same fact, or let the supervisor block unrelated work while awaiting a response.
+Treat disposition as the architect's response, not as finding state. Keep `architect_ack`, `blocker`, and `next_check_boundary` as metadata. Carry `OPEN` findings across heartbeats until one current fact closes them or a replacement fact supersedes them. Transition only `OPEN → CLOSED` with one closing fact or `OPEN → SUPERSEDED` with one replacement fact or successor finding; both terminal states remain closed. A recurrence creates a new finding that references the old one.
+
+When a business gate closes, reconcile every related finding as `CLOSED`, `SUPERSEDED`, or still `OPEN`. An `OPEN` finding must retain its blocker, next-check boundary, and whether it blocks the claimed completion layer. It may remain open and non-blocking, but it must not disappear silently.
 
 ## Use an explicit architect-supervisor exchange
 
@@ -175,9 +196,11 @@ Supervisor output is advisory: the supervisor identifies risk, conditions, and d
 Use both review modes:
 
 - **Heartbeat review**: monitor long-running work at the cadence declared by the user or project. If none is declared, choose a cadence that matches the task's expected progress boundary instead of imposing a universal interval.
-- **Event-driven review**: review after a goal or business-gate change, creation of a possibly unrelated task, transition from smoke check to a full or real flow, completion of a real business chain, a high-risk or irreversible action, integration, deployment, or a milestone-completion claim.
+- **Event-driven review**: open a new review boundary only when there is a material delta in the externally verifiable outcome, shared acceptance boundary, risk or authority boundary, claimed completion layer, exclusive-resource conflict, or an open finding reaching its declared next-check boundary. An independent safety or policy check may also require a review.
 
 At a heartbeat, read the latest state card and recent handoffs once, compare them with the previous boundary, and remain silent when work is relevant and healthy. Do not poll rapidly or micromanage a running worker. At an event review, inspect only facts needed for that transition.
+
+Material delta does not replace liveness detection. If a next observable checkpoint passes without a fresh execution fact while a safe relevant action exists, keep the same outcome batch and perform a liveness recheck; mark `YELLOW/STALLED` when appropriate. Ordinary commits, tests, same-batch repairs, technical-review `CLEAR`, owner handoffs, or integration preparation are not new event-review boundaries by themselves.
 
 ## Detect and recover stalls
 
@@ -208,7 +231,7 @@ Keep one internal supervision card with:
 - explicit wait and deadline;
 - duplicate, conflict, or direction mismatch;
 - smallest sampled evidence;
-- communication audit: window, interval-history source, observed user-visible delta, and `CLEAR`, `YELLOW`, or `NOT_RUN`;
+- communication audit: `NO_NEW_UPDATES`, `CHECKED` with `CLEAR/YELLOW`, or `NOT_RUN`, with the required evidence fields;
 - open supervisor findings and response boundary;
 - material waste and one correction, only if present;
 - next safe action;
