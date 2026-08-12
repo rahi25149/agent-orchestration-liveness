@@ -118,6 +118,35 @@ class ContextMetricsTests(unittest.TestCase):
         self.assertEqual(result["firstFiveRotationsNeedingSecondContextTurn"], 0)
         self.assertEqual(result["observedContextRegressions"]["all"], 0)
 
+    def test_report_excludes_open_paused_and_aborted_epochs_from_samples(self) -> None:
+        events = passing_events()
+        for suffix, outcome in (("open", None), ("paused", "paused"), ("aborted", "aborted")):
+            epoch_id = f"baseline-{suffix}"
+            events.extend(
+                [
+                    base_event(epoch_id, "baseline", "epoch_started"),
+                    base_event(
+                        epoch_id,
+                        "baseline",
+                        "turn_completed",
+                        eventId=f"{epoch_id}:turn:1",
+                        source="app_server",
+                        turnIndex=1,
+                        inputTokens=999999,
+                        cachedInputTokens=0,
+                        totalTokens=999999,
+                    ),
+                ]
+            )
+            if outcome is not None:
+                events.append(base_event(epoch_id, "baseline", "epoch_closed", outcome=outcome))
+        report = metrics.build_report([metrics.validate_event(item) for item in events])
+        result = report["decisionMetrics"][0]
+        self.assertEqual(result["epochs"]["baseline"], 3)
+        self.assertEqual(result["turns"]["baseline"], 3)
+        self.assertEqual(result["medianInputTokens"]["baseline"], 1000.0)
+        self.assertEqual(result["decision"], "pass")
+
     def test_two_regressions_in_first_five_rotations_roll_back(self) -> None:
         events = passing_events()
         for number, kind in ((2, "constraint_miss"), (5, "duplicate_work")):

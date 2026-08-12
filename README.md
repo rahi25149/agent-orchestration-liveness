@@ -29,6 +29,8 @@ This skill coordinates long-running architect-worker-supervisor workflows while 
 - `references/context-lifecycle-and-runtime-metrics.md`: bounded role state, safe fresh-thread rotation, compact-hook limits, secure JSONL metrics, review thresholds, and rollback gates.
 - `scripts/context_metrics.py`: strict standard-library JSONL append, validation, and baseline-versus-pilot reporting.
 - `scripts/test_context_metrics.py`: deterministic tests for schema safety and decision thresholds.
+- `scripts/app_server_usage_adapter.py`: strict App Server notification coalescer that persists one content-free usage record per completed turn.
+- `scripts/test_app_server_usage_adapter.py`: deterministic privacy, replay, ordering, and fail-closed tests plus an opt-in real App Server smoke test.
 
 ## Context metrics quick start
 
@@ -58,5 +60,25 @@ python3 scripts/test_context_metrics.py -v
 ```
 
 The named tests cover durable serial and concurrent append, stable replay rejection, malformed or partial JSONL rejection, strict content-field exclusion, owner-only permissions, symlink rejection, role/thread/epoch grouping, synthetic report decisions, and a bounded small-ledger latency smoke check. Passing this matrix approves only the local recorder. It does not approve an App Server adapter, real token collection, automated rotation, compact hooks, or any Codex configuration change.
+
+## Phase 1 App Server adapter gate
+
+Run the deterministic adapter matrix first:
+
+```bash
+python3 scripts/test_app_server_usage_adapter.py -v
+```
+
+Then opt in to one bounded real App Server turn. The smoke test defaults to `gpt-5.4-mini` with `low` reasoning so protocol verification does not inherit an expensive global route; it changes no Codex configuration:
+
+```bash
+RUN_CODEX_APP_SERVER_SMOKE=1 \
+  python3 scripts/test_app_server_usage_adapter.py \
+  LiveAppServerUsageAdapterTest.test_real_terminal_turn_writes_one_safe_usage_record -v
+```
+
+Integrate `AppServerUsageAdapter.consume()` only on the server-to-client side of a controlled App Server connection. The standalone adapter command accepts an already-live JSONL tap on stdin; it is not a bidirectional App Server proxy. Never persist the raw protocol stream. Supply the exact role, cohort, model, and reasoning route for the epoch. A model reroute, mixed thread, missing terminal notification, or missing final usage update fails closed and requires a new or corrected epoch.
+
+Passing the real smoke approves the adapter mechanics only. Start comparable Architect and Supervisor baseline epochs at their next safe handoff boundaries, capture normal work without changing compaction or rotation behavior, and collect the required three baseline epochs before starting the manual fresh-thread pilot. Reports count token samples only from epochs closed with `outcome=completed`; open, paused, and aborted epochs remain visible in the ledger but cannot satisfy the sample gate. Do not retrofit usage onto an already-running thread, hand-estimate tokens, enable hooks, or automate rotation.
 
 The new rules are project-agnostic. Project-specific model routing, business gates, credentials, machines, ports, and reporting cadence remain in each project's own instructions or live state card.

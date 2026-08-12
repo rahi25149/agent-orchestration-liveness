@@ -194,7 +194,9 @@ Stop Phase 0 immediately if prohibited content is recorded, a replay is counted 
 
 ### Phase 1: real usage adapter and manual rotation pilot
 
-Proceed only after Phase 0 passes. Verify an App Server adapter that coalesces token notifications into one terminal `turn_completed` record with a stable event ID. Then establish the comparable baseline, run manual fresh-thread rotations at safe boundaries, and apply the pilot gates above. Do not automate rotation or compaction.
+Proceed only after Phase 0 passes. Verify an App Server adapter that coalesces token notifications into one terminal `turn_completed` record with a stable event ID. The deterministic matrix must cover usage-before-terminal and terminal-before-usage ordering, repeated usage snapshots, replay across restart, mixed-thread rejection, model-reroute rejection, malformed or incomplete streams, owner-only repository-external storage, and content exclusion. Then run one opt-in real App Server turn and require one final usage record plus one matching `turn/completed` notification. Use an explicitly bounded low-cost smoke route rather than inheriting the operator's global model route, and do not change global Codex configuration.
+
+A successful smoke verifies adapter mechanics, not a baseline. Attach the adapter to each role's next fresh App Server connection at a safe handoff boundary; do not retrofit an already-running thread or persist its raw protocol stream. Only epochs closed with `outcome=completed` contribute token samples or completed-epoch counts; open, paused, and aborted epochs cannot satisfy the sample gate. Establish the comparable baseline, run manual fresh-thread rotations at safe boundaries, and apply the pilot gates above. Do not automate rotation or compaction.
 
 ### Phase 2: optional compact hooks and light rotator
 

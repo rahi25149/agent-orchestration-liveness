@@ -311,13 +311,27 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
     results = []
     for key, items in sorted(groups.items()):
         role, cohort, model, reasoning = key
+        completed_epoch_ids = {
+            mode: {
+                item["epochId"]
+                for item in items
+                if item["mode"] == mode
+                and item["event"] == "epoch_closed"
+                and item["outcome"] == "completed"
+            }
+            for mode in MODES
+        }
         epochs = {
-            mode: {item["epochId"] for item in items if item["mode"] == mode}
+            mode: completed_epoch_ids[mode]
             for mode in MODES
         }
         turns = {
             mode: [
-                item for item in items if item["mode"] == mode and item["event"] == "turn_completed"
+                item
+                for item in items
+                if item["mode"] == mode
+                and item["event"] == "turn_completed"
+                and item["epochId"] in completed_epoch_ids[mode]
             ]
             for mode in MODES
         }

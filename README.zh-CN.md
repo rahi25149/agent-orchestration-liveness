@@ -29,6 +29,8 @@
 - `references/context-lifecycle-and-runtime-metrics.md`：有界角色状态、fresh-thread 轮换、压缩 hook 边界、安全 JSONL 指标、复查阈值与回滚门。
 - `scripts/context_metrics.py`：只依赖 Python 标准库的严格 JSONL 追加、校验与 baseline／pilot 对比脚本。
 - `scripts/test_context_metrics.py`：schema 安全与决策阈值的确定性测试。
+- `scripts/app_server_usage_adapter.py`：严格合并 App Server 通知；每个已完成 turn 只持久化一条不含正文的用量记录。
+- `scripts/test_app_server_usage_adapter.py`：覆盖隐私、重放、乱序和失败闭合的确定性测试，以及需显式开启的真实 App Server 烟测。
 
 ## 上下文指标快速使用
 
@@ -58,5 +60,25 @@ python3 scripts/test_context_metrics.py -v
 ```
 
 命名测试覆盖串行与并发持久追加、稳定重放拒绝、畸形或残缺 JSONL 拒绝、内容字段严格排除、仅所有者权限、符号链接拒绝、角色／线程／epoch 分组、合成报告决策，以及小型日志的有界延迟烟测。该矩阵通过只代表本地 recorder 准出，不代表 App Server adapter、真实 token 采集、自动轮换、compact hook 或任何 Codex 配置变更已获准。
+
+## Phase 1 App Server adapter 准出
+
+先运行确定性 adapter 测试：
+
+```bash
+python3 scripts/test_app_server_usage_adapter.py -v
+```
+
+然后显式运行一次有界的真实 App Server turn。烟测默认使用 `gpt-5.4-mini` 与 `low` 推理，避免继承昂贵的全局路由；它不会修改 Codex 配置：
+
+```bash
+RUN_CODEX_APP_SERVER_SMOKE=1 \
+  python3 scripts/test_app_server_usage_adapter.py \
+  LiveAppServerUsageAdapterTest.test_real_terminal_turn_writes_one_safe_usage_record -v
+```
+
+只能把 `AppServerUsageAdapter.consume()` 接到受控 App Server 连接的“服务端到客户端”方向。独立 adapter 命令从 stdin 接收已存在的实时 JSONL tap，但它不是双向 App Server 代理。禁止把原始协议流写入磁盘。epoch 必须提供精确的角色、cohort、model 和 reasoning 路由；一旦发生模型改路由、混入多个 thread、缺少终态通知或缺少最终 usage，adapter 会失败闭合并要求新建或修正 epoch。
+
+真实烟测通过只证明 adapter 机制成立。架构师与监督者应在各自下一次安全交接边界开始可比 baseline epoch，保持原生 compaction 与轮换行为不变，先收集至少 3 个 baseline epoch，再开始人工 fresh-thread pilot。报告只把以 `outcome=completed` 关闭的 epoch 纳入 token 样本；open、paused 和 aborted epoch 仍留在日志中，但不能满足样本门。不得给已运行中的 thread 反向补记用量，不得手工估算 token，也不得启用 hook 或自动轮换。
 
 这些规则保持项目无关。具体项目的模型路由、业务门、凭据、机器、端口和汇报节奏，应继续放在项目自己的说明或实时状态卡中。
