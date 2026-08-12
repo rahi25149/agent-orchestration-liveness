@@ -15,6 +15,8 @@
 - **真实完成层：** 在首次可执行的最小切片上观察真实浏览器、桌面、设备或远程会话后，才声明对应的更高完成层。
 - **监督状态分离：** 分开维护编排存活状态、监督发现状态、架构师处置结论以及阻塞／确认元数据。
 - **低噪音通信审计：** 每个区间保留一条可检查的内部通信审计记录，但不把健康状态机械播报给用户。
+- **有界上下文生命周期：** 可以复用工程 owner、分支和 Worktree，但不无限复用聊天历史；只在安全交接边界与真实压力信号同时成立时轮换线程。
+- **低成本运行指标：** 架构师与监督者分开统计，只比较同类 epoch 的输入 token 中位数、实质上下文回归和冷启动 turn 数，不收集对话正文，也不建设监控平台。
 
 ## 文件说明
 
@@ -24,5 +26,29 @@
 - `references/interactive-runtime-lifecycle.md`：真实界面最小探针、唯一运行 owner、任务级保活、授权判断、`USER_WAIT` 与安全清理。
 - `references/user-reporting-boundaries.md`：内部事件与用户可见汇报边界，以及通信审计证据。
 - `references/review-exchange-templates.md`：架构师与监督者之间的审查、处置和发现状态模板。
+- `references/context-lifecycle-and-runtime-metrics.md`：有界角色状态、fresh-thread 轮换、压缩 hook 边界、安全 JSONL 指标、复查阈值与回滚门。
+- `scripts/context_metrics.py`：只依赖 Python 标准库的严格 JSONL 追加、校验与 baseline／pilot 对比脚本。
+- `scripts/test_context_metrics.py`：schema 安全与决策阈值的确定性测试。
+
+## 上下文指标快速使用
+
+Phase 0 只做人工试点，不改 Codex 全局配置。指标文件必须位于仓库外，脚本会把文件权限收紧为 `0600`：
+
+```bash
+python3 scripts/context_metrics.py append \
+  --path ~/.codex/orchestration-metrics/events.jsonl \
+  --event epoch_started --epoch-id architect-b01 --mode baseline \
+  --event-id architect-b01-start --thread-ref architect-b01 \
+  --role architect --cohort outcome-batch --model gpt-5.6-luna \
+  --reasoning max --source manual
+
+python3 scripts/context_metrics.py validate \
+  --path ~/.codex/orchestration-metrics/events.jsonl
+
+python3 scripts/context_metrics.py report \
+  --path ~/.codex/orchestration-metrics/events.jsonl
+```
+
+日志只允许结构化计数和不透明证据引用，禁止写入 prompt、回复、文件路径、URL、工具输出、diff、凭据或叙述性备注。Phase 0 只验证追加、去重、schema、权限、分组和隐私边界。必须先由已验证的 App Server adapter 提供每个已完成 turn 的最终用量，再收集至少 3 个可比 baseline epoch、3 个 pilot epoch 和 5 次 pilot 轮换，才能把报告用于决策；禁止手工估算 token。实时状态卡仍是工作流权威真源；指标日志不是第二套台账。
 
 这些规则保持项目无关。具体项目的模型路由、业务门、凭据、机器、端口和汇报节奏，应继续放在项目自己的说明或实时状态卡中。

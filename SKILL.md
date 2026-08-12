@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration-liveness
-description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, outcome batching, risk-triggered technical review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
+description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, bounded context lifecycle, outcome batching, risk-triggered technical review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Use when persistent role threads need safe handoff, compaction, fresh-thread rotation, or low-cost context-efficiency measurement. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
 ---
 
 # Agent Orchestration Liveness and Independent Supervision
@@ -35,6 +35,22 @@ Route by full thread ID. Treat host or transport identifiers as transport metada
 Use the current state card as an index, not as unquestionable truth. For a material direction, completion, conflict, or risk judgment, sample the smallest direct current fact needed to check the claim: a fresh worker handoff, one relevant file or diff, one current task state, or one current runtime fact. Do not rescan the repository, replay completed tests, or rebuild a proof chain.
 
 Treat old orders, process IDs, revisions, thread states, and failure codes as historical until the current workflow makes them relevant again.
+
+## Bound long-lived context and measure rotation cost
+
+Treat native compaction as a context safety valve, not as the authority for workflow continuity. Keep one bounded Architect authority snapshot and one smaller Supervisor overlay that references the Architect revision. Reuse an established branch, Worktree, or owner when appropriate, but do not reuse unbounded chat history merely because those engineering resources persist.
+
+Rotate a long-lived role thread only at a safe handoff boundary plus a real pressure signal, unless continuity is already untrustworthy. Start a fresh thread with the bounded role state and current assignment; do not fork the full history to claim a context reset. The new thread must verify the smallest current facts before accepting the state packet. Retire the old thread only after a correct continuity acknowledgement.
+
+Measure context changes as a small experiment, not as a new governance system. Keep the metrics log outside the repository with user-only permissions. Never record prompts, responses, tool output, diffs, credentials, personal data, or free-form notes. Separate Architect and Supervisor cohorts, compare equivalent work and model routes, and use exactly three decision metrics:
+
+- median input tokens per completed turn, with cached input retained only as diagnostic context;
+- observed substantive context regressions, classified as `constraint_miss` or `duplicate_work`;
+- cold-start turns from a fresh role thread to its first correct advancing action.
+
+Daily token totals may help diagnose load, but must not decide whether a context policy passes. The live state card remains the workflow authority; the append-only metrics file is only an experiment record.
+
+Before changing compaction, handoff, fresh-thread rotation, role-state schemas, context-cost instrumentation, or the related stop and rollback gates, read [Context Lifecycle and Runtime Metrics](references/context-lifecycle-and-runtime-metrics.md) completely. Begin with its local Phase 0 recorder validation. Do not hand-estimate token usage, and do not enable hooks, thread automation, a collector, database, or dashboard until real App Server turn-usage capture is verified and the manual pilot has enough comparable samples without a substantive continuity regression.
 
 ## Issue bounded worker assignments
 

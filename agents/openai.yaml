@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Orchestration Liveness"
-  short_description: "Coordinate outcome batches and risk-triggered review"
-  default_prompt: "Use $agent-orchestration-liveness to coordinate a long-running architect-worker-supervisor workflow, keep outcome batches alive, route risk-triggered technical review without serializing low-risk work, and report the highest completion layer actually proven."
+  short_description: "Coordinate outcome batches, liveness, and bounded context"
+  default_prompt: "Use $agent-orchestration-liveness to coordinate a long-running architect-worker-supervisor workflow, keep outcome batches alive, bound role context without losing continuity, route risk-triggered technical review without serializing low-risk work, and report the highest completion layer actually proven."
