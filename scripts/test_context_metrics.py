@@ -177,6 +177,47 @@ class ContextMetricsTests(unittest.TestCase):
         self.assertEqual(result["decision"], "rollback")
         self.assertIn("two_rotations_need_second_context_turn_in_first_five", result["rollbackReasons"])
 
+    def test_accepted_rotation_from_aborted_epoch_does_not_count(self) -> None:
+        events = passing_events()
+        for event in events:
+            if event["epochId"] == "pilot-5" and event["event"] == "epoch_closed":
+                event["outcome"] = "aborted"
+        report = metrics.build_report([metrics.validate_event(item) for item in events])
+        result = report["decisionMetrics"][0]
+        self.assertEqual(result["epochs"]["pilot"], 4)
+        self.assertEqual(result["acceptedRotations"], 4)
+        self.assertEqual(result["decision"], "insufficient_data")
+
+    def test_rolled_back_attempts_count_toward_first_five_regression_gate(self) -> None:
+        events = passing_events()
+        for number in (2, 4):
+            for event in events:
+                if event["event"] == "rotation_completed" and event["boundaryId"] == f"rotation-{number}":
+                    event["result"] = "rolled_back"
+                    event.pop("coldStartTurns")
+                    break
+            for event in events:
+                if event["epochId"] == f"pilot-{number}" and event["event"] == "epoch_closed":
+                    event["outcome"] = "aborted"
+                    break
+            events.append(
+                base_event(
+                    f"pilot-{number}",
+                    "pilot",
+                    "context_regression",
+                    boundaryType="rotation",
+                    boundaryId=f"rotation-{number}",
+                    kind="constraint_miss",
+                    impact="correction",
+                    evidenceRef=f"SUP-{number:03d}",
+                )
+            )
+        report = metrics.build_report([metrics.validate_event(item) for item in events])
+        result = report["decisionMetrics"][0]
+        self.assertEqual(result["acceptedRotations"], 3)
+        self.assertEqual(result["decision"], "rollback")
+        self.assertIn("two_context_regressions_in_first_five_rotations", result["rollbackReasons"])
+
     def test_unknown_field_is_rejected(self) -> None:
         event = base_event("baseline-1", "baseline", "epoch_started", note="do not store narrative")
         with self.assertRaisesRegex(metrics.MetricsError, "unknown fields"):

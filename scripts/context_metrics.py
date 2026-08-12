@@ -354,24 +354,30 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
             impact: sum(item["impact"] == impact for item in pilot_regressions)
             for impact in sorted(REGRESSION_IMPACTS)
         }
-        accepted_rotations = [
+        rotation_attempts = [
             item
             for item in items
             if item["mode"] == "pilot"
             and item["event"] == "rotation_completed"
-            and item["result"] == "accepted"
+        ]
+        accepted_rotations = [
+            item
+            for item in rotation_attempts
+            if item["result"] == "accepted"
+            and item["epochId"] in completed_epoch_ids["pilot"]
         ]
         cold_starts = [item["coldStartTurns"] for item in accepted_rotations]
         cold_p90_diagnostic = nearest_rank_p90(cold_starts) if len(cold_starts) >= 10 else None
         corrections = sum(value > 1 for value in cold_starts)
         first_five_rotations = accepted_rotations[:5]
-        first_five_ids = {item["boundaryId"] for item in first_five_rotations}
+        first_five_attempt_ids = {item["boundaryId"] for item in rotation_attempts[:5]}
         first_five_corrections = sum(item["coldStartTurns"] > 1 for item in first_five_rotations)
 
         first_five_regressions = [
             item
             for item in pilot_regressions
-            if item["boundaryType"] == "rotation" and item["boundaryId"] in first_five_ids
+            if item["boundaryType"] == "rotation"
+            and item["boundaryId"] in first_five_attempt_ids
         ]
         protected_boundary_violation = any(
             item["impact"] == "boundary_violation" for item in pilot_regressions
@@ -387,7 +393,7 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
         rollback_reasons = []
         if protected_boundary_violation:
             rollback_reasons.append("protected_boundary_violation")
-        if len(first_five_rotations) == 5 and len(first_five_regressions) >= 2:
+        if len(rotation_attempts[:5]) == 5 and len(first_five_regressions) >= 2:
             rollback_reasons.append("two_context_regressions_in_first_five_rotations")
         if len(first_five_rotations) == 5 and first_five_corrections >= 2:
             rollback_reasons.append("two_rotations_need_second_context_turn_in_first_five")

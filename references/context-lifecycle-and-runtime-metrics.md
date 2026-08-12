@@ -48,8 +48,11 @@ A safe boundary means:
 - the coherent outcome batch is closed or at a stable candidate boundary;
 - no completion packet still needs an Architect decision;
 - no atomic browser, desktop, device, funds, deployment, or other exclusive operation is in flight;
+- immediately before `thread/start`, every named Architect, Worker, reviewer, and exclusive operator has been rechecked for a queued or resumed action after the stop boundary;
 - owners, hotspots, waits, findings, and the next safe action are in the bounded role state;
 - the new role thread can verify the smallest direct current facts without replaying the project.
+
+A stop response, idle snapshot, or completion acknowledgement is not durable proof of this boundary. A previously queued assignment or automatic continuation may start after that observation. If any new execution fact appears before the fresh thread starts, invalidate the boundary, preserve the resulting state, and begin a new boundary check instead of treating the new epoch as comparable.
 
 Pressure signals include:
 
@@ -71,7 +74,7 @@ The new thread must:
 4. perform the first correct advancing action;
 5. return a continuity acknowledgement.
 
-Retire or archive the old thread only after this acknowledgement. If the new thread cannot establish continuity, continue with the old thread and record a rolled-back rotation.
+The acknowledgement establishes `PROVISIONAL` continuity and permits active traffic to move to the new thread. Keep the prior thread read-only and recoverable; a reversible archive is allowed, but do not destroy its recovery path. Finalize the rotation as `accepted` only after the new role closes its first comparable outcome epoch and no substantive regression is directly linked to the handoff. Until then, do not emit an accepted `rotation_completed` event. If the new thread cannot establish first-turn continuity, or later loses the role/authority contract, routes the wrong owner, misses a required handoff, misstates the completion layer, or leaks internal lifecycle reporting because of the handoff, record `rolled_back`, abort the epoch, and resume the prior or last-good role. Ordinary implementation defects without a direct continuity link do not retroactively fail the rotation.
 
 Use a more conservative epoch for the Architect: one coherent outcome batch or a tightly related group of batches. Use a lighter Supervisor epoch: one gate, one outcome batch, or one related finding cluster. Do not rotate the Supervisor between a finding and its immediate re-review when the communication interval or finding history is still required.
 
@@ -123,7 +126,7 @@ Supported event types:
 - `epoch_started` and `epoch_closed` bound a sample;
 - `turn_completed` records one turn index plus final input, cached-input, and total-token counters;
 - `compacted` records only the compact generation;
-- `rotation_completed` records an accepted or rolled-back boundary and, when accepted, cold-start turns;
+- `rotation_completed` records the terminal continuity result: `accepted` only after the first comparable outcome epoch closes cleanly, or `rolled_back` after a handoff-linked failure; when accepted it also records the already-observed cold-start turns;
 - `context_regression` records `constraint_miss` or `duplicate_work`, its observed impact (`correction`, `repeated_execution`, or protected `boundary_violation`), the affected compact/rotation/handoff boundary, and one opaque evidence reference.
 
 Do not add a free-form `note`, message text, path, URL, tool result, diff, or error body. An evidence reference is a bounded opaque identifier such as `SUP-014` or `turn:17`; it is not a narrative field.
@@ -144,7 +147,7 @@ An App Server adapter must buffer `thread/tokenUsage/updated` notifications and 
 
 Phase 0 does not judge token improvement. It proves only that the local recorder is atomic, strict, de-duplicated, owner-only, correctly grouped, and free of content-bearing data. Do not fill real logs with hand-estimated token values.
 
-After the App Server adapter is verified, the manual pilot compares at least three baseline epochs with at least three pilot epochs in the same cohort. Each pilot epoch should begin with a fresh role thread and one accepted or rolled-back rotation record. Collect at least five accepted pilot rotations before issuing a pass decision.
+After the App Server adapter is verified, the manual pilot compares at least three baseline epochs with at least three pilot epochs in the same cohort. Each pilot epoch should begin with a fresh role thread. Its first-turn acknowledgement remains provisional; append exactly one accepted or rolled-back terminal rotation record when the first comparable outcome epoch closes or continuity fails. Collect at least five accepted pilot rotations before issuing a pass decision. Accepted rotations from paused or aborted epochs do not satisfy this gate.
 
 The report emits a decision per comparable group:
 
