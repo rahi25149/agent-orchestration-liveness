@@ -51,4 +51,12 @@ python3 scripts/context_metrics.py report \
 
 日志只允许结构化计数和不透明证据引用，禁止写入 prompt、回复、文件路径、URL、工具输出、diff、凭据或叙述性备注。Phase 0 只验证追加、去重、schema、权限、分组和隐私边界。必须先由已验证的 App Server adapter 提供每个已完成 turn 的最终用量，再收集至少 3 个可比 baseline epoch、3 个 pilot epoch 和 5 次 pilot 轮换，才能把报告用于决策；禁止手工估算 token。实时状态卡仍是工作流权威真源；指标日志不是第二套台账。
 
+完整运行 Phase 0 recorder 准出矩阵：
+
+```bash
+python3 scripts/test_context_metrics.py -v
+```
+
+命名测试覆盖串行与并发持久追加、稳定重放拒绝、畸形或残缺 JSONL 拒绝、内容字段严格排除、仅所有者权限、符号链接拒绝、角色／线程／epoch 分组、合成报告决策，以及小型日志的有界延迟烟测。该矩阵通过只代表本地 recorder 准出，不代表 App Server adapter、真实 token 采集、自动轮换、compact hook 或任何 Codex 配置变更已获准。
+
 这些规则保持项目无关。具体项目的模型路由、业务门、凭据、机器、端口和汇报节奏，应继续放在项目自己的说明或实时状态卡中。

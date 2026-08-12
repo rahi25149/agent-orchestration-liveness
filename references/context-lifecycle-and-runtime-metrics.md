@@ -179,6 +179,7 @@ Advance only when the report passes and a manual review confirms that the baseli
 
 ### Phase 0: recorder and state-boundary validation
 
+- run `python3 scripts/test_context_metrics.py -v` and require every named acceptance test to pass;
 - keep native compaction defaults;
 - do not set a custom compact prompt or compact threshold;
 - keep role state and metrics outside repositories;
@@ -186,6 +187,8 @@ Advance only when the report passes and a manual review confirms that the baseli
 - exercise report logic with synthetic test fixtures only;
 - do not enter hand-estimated token usage in the real log;
 - do not change Codex Desktop, App Server, hooks, or global configuration.
+
+This test matrix is the Phase 0 recorder gate. It covers serial and concurrent append, stable replay rejection, malformed and partial JSONL, content-field exclusion, owner-only permissions, symlink rejection, role/thread/epoch grouping, synthetic decision logic, and small-ledger latency. Passing it does not authorize real token capture or any Phase 1 integration.
 
 Stop Phase 0 immediately if prohibited content is recorded, a replay is counted twice, role or thread attribution is wrong, malformed data is silently accepted, instrumentation affects normal work, or the metrics log is used as workflow state.
 

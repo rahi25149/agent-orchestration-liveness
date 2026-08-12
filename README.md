@@ -51,4 +51,12 @@ python3 scripts/context_metrics.py report \
 
 Record only structured counters and opaque evidence references. Do not put prompts, replies, paths, URLs, tool output, diffs, credentials, or narrative notes in the log. Phase 0 validates append, de-duplication, schema, permissions, grouping, and privacy only. After a verified App Server adapter supplies final per-turn usage, collect at least three comparable baseline epochs, three pilot epochs, and five pilot rotations before using the report as a decision aid. Never hand-estimate token usage.
 
+Run the complete Phase 0 recorder acceptance matrix with:
+
+```bash
+python3 scripts/test_context_metrics.py -v
+```
+
+The named tests cover durable serial and concurrent append, stable replay rejection, malformed or partial JSONL rejection, strict content-field exclusion, owner-only permissions, symlink rejection, role/thread/epoch grouping, synthetic report decisions, and a bounded small-ledger latency smoke check. Passing this matrix approves only the local recorder. It does not approve an App Server adapter, real token collection, automated rotation, compact hooks, or any Codex configuration change.
+
 The new rules are project-agnostic. Project-specific model routing, business gates, credentials, machines, ports, and reporting cadence remain in each project's own instructions or live state card.
