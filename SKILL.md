@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration-liveness
-description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, outcome batching, deduplicated event review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
+description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, outcome batching, risk-triggered technical review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
 ---
 
 # Agent Orchestration Liveness and Independent Supervision
@@ -13,7 +13,7 @@ Keep these authorities separate:
 - **Worker**: own one bounded assignment and its declared hotspot. Execute autonomously inside that scope, stop at the first stable failure, and report current facts. Do not silently widen the assignment or claim a higher completion layer than the evidence supports.
 - **Supervisor**: independently audit goal alignment, liveness, ownership, conflicts, truthful claims, and avoidable waste. Stay read-only. Do not assign workers, choose implementation details, operate machines, edit artifacts, or become a second architect. When a technical reviewer already covers the current candidate, verify review coverage, integration, freshness, and completion-layer truth instead of repeating routine code review.
 
-Keep ordinary commit-level code review, test review, and defect adjudication in a separate technical-review workflow. If the supervisor happens to notice a material safety, funds, data-integrity, or current-gate defect, record it and route it to the appropriate reviewer instead of expanding into a continuing code review.
+Keep ordinary commit-level code review, test review, and defect adjudication in a separate technical-review workflow. Treat independent technical review as a risk-triggered responsibility, not a permanent fourth role or a default gate for every candidate. The reviewer must be independent of the primary implementer, but may be another available worker; do not create a standing heartbeat, Worktree, or approval role for the function. If the supervisor happens to notice a material safety, funds, data-integrity, or current-gate defect, record it and route it to the appropriate reviewer instead of expanding into a continuing code review.
 
 ## Establish the current operating contract
 
@@ -55,6 +55,8 @@ Define one outcome batch by one externally verifiable outcome and one shared acc
 
 Before creating, merging, splitting, pausing, or closing an outcome batch; deciding whether a lifecycle event merits a new review; mapping a technical review to a completion layer; entering a bounded architect execution mode; or reconciling findings at gate closure, read [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md) completely.
 
+Before deciding whether independent technical review is required, preparing its handoff, issuing or consuming `TECH_CLEAR` or `TECH_BLOCKED`, or deciding whether a prior result is stale, read [Risk-Triggered Technical Review](references/technical-review-workflow.md) completely. Use Worker self-check plus Architect spot-check for low-risk, reversible, locally testable changes. Require independent review only when a protected semantic invariant is affected and the expected late-failure cost justifies the review, handoff, duplicate-evidence, and critical-path wait costs.
+
 Do not add a Worktree, release artifact, hash chain, repeated preflight, approval step, or user reply phrase unless the actual assignment requires it. Do not ask the user to foreground a window, click an ordinary control, or repeat a fixed confirmation when available automation can perform the action safely.
 
 ## Classify liveness and relevance
@@ -93,7 +95,9 @@ State completion at the highest layer actually proven:
 
 Never use a lower layer to imply a higher one. A mock, simulator, unit test, process start, or API response is not automatically a real device, real funds, real user flow, or full business result.
 
-A technical-review `CLEAR` proves only the reviewed layer. When a higher completion claim depends on a browser, desktop, device, remote session, or other runtime surface, run a representative real-surface probe at the first executable thin slice and before scaling a second full branch or dependent implementation on that surface. Until observed, cap the completion layer at engineering or local integration as supported by the evidence.
+A technical-review `TECH_CLEAR` proves only the reviewed layer. When a higher completion claim depends on a browser, desktop, device, remote session, or other runtime surface, run a representative real-surface probe at the first executable thin slice and before scaling a second full branch or dependent implementation on that surface. Until observed, cap the completion layer at engineering or local integration as supported by the evidence.
+
+A required technical review blocks only promotion or shared integration of the affected risk scope. Keep unrelated and non-dependent work moving. `TECH_CLEAR` applies only to the declared review scope, candidate boundary, and proven engineering layer; it never proves integration, real-surface, or user-capability completion.
 
 For any long-lived browser, desktop, device, remote-session, or interactive automation task; the first executable surface probe; runtime keepalive or interruption handling; a possible interactive `USER_WAIT`; or runtime cleanup, read [Interactive Runtime Lifecycle](references/interactive-runtime-lifecycle.md) completely.
 
@@ -124,6 +128,7 @@ Require each worker to finish with one compact packet:
 - safe state of owned processes, configuration, resources, and pending work;
 - one allowed next action;
 - whether the user is required and the stable reason.
+- technical-review disposition (`NOT_REQUIRED` or `REQUIRED`); when required, include the protected invariant, reason, and one bounded review scope.
 
 Require the architect to acknowledge the packet and do exactly one of these:
 
@@ -200,7 +205,7 @@ Use both review modes:
 
 At a heartbeat, read the latest state card and recent handoffs once, compare them with the previous boundary, and remain silent when work is relevant and healthy. Do not poll rapidly or micromanage a running worker. At an event review, inspect only facts needed for that transition.
 
-Material delta does not replace liveness detection. If a next observable checkpoint passes without a fresh execution fact while a safe relevant action exists, keep the same outcome batch and perform a liveness recheck; mark `YELLOW/STALLED` when appropriate. Ordinary commits, tests, same-batch repairs, technical-review `CLEAR`, owner handoffs, or integration preparation are not new event-review boundaries by themselves.
+Material delta does not replace liveness detection. If a next observable checkpoint passes without a fresh execution fact while a safe relevant action exists, keep the same outcome batch and perform a liveness recheck; mark `YELLOW/STALLED` when appropriate. Ordinary commits, tests, same-batch repairs, technical-review `TECH_CLEAR`, owner handoffs, or integration preparation are not new event-review boundaries by themselves.
 
 ## Detect and recover stalls
 
@@ -248,6 +253,8 @@ Reject these patterns:
 - treating a state card as proof without the smallest necessary current check;
 - allowing indefinite `ACTIVE_WORK` without a risk, dependency, or next boundary;
 - allowing the supervisor to become a second architect, dispatcher, release gatekeeper, or routine code reviewer;
+- requiring independent technical review for every candidate, commit, or low-risk reversible change;
+- making a reviewer rerun all Worker evidence or block unrelated safe work;
 - presenting engineering completion as integration or user-capability completion;
 - duplicating tasks or real-world actions to prove a handoff;
 - adding unnecessary approvals, reports, hashes, manifests, signatures, fixed reply phrases, or repeated validations;
