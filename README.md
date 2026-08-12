@@ -31,6 +31,8 @@ This skill coordinates long-running architect-worker-supervisor workflows while 
 - `scripts/test_context_metrics.py`: deterministic tests for schema safety and decision thresholds.
 - `scripts/app_server_usage_adapter.py`: strict App Server notification coalescer that persists one content-free usage record per completed turn.
 - `scripts/test_app_server_usage_adapter.py`: deterministic privacy, replay, ordering, and fail-closed tests plus an opt-in real App Server smoke test.
+- `scripts/desktop_rollout_usage_adapter.py`: explicitly armed Codex Desktop bridge for fresh threads whose isolated stdio App Server connection cannot be tapped directly.
+- `scripts/test_desktop_rollout_usage_adapter.py`: deterministic fresh-arm, route, replay, compaction, privacy, and terminal-boundary tests for the Desktop bridge.
 
 ## Context metrics quick start
 
@@ -80,5 +82,36 @@ RUN_CODEX_APP_SERVER_SMOKE=1 \
 Integrate `AppServerUsageAdapter.consume()` only on the server-to-client side of a controlled App Server connection. The standalone adapter command accepts an already-live JSONL tap on stdin; it is not a bidirectional App Server proxy. Never persist the raw protocol stream. Supply the exact role, cohort, model, and reasoning route for the epoch. A model reroute, mixed thread, missing terminal notification, or missing final usage update fails closed and requires a new or corrected epoch.
 
 Passing the real smoke approves the adapter mechanics only. Start comparable Architect and Supervisor baseline epochs at their next safe handoff boundaries, capture normal work without changing compaction or rotation behavior, and collect the required three baseline epochs before starting the manual fresh-thread pilot. Reports count token samples only from epochs closed with `outcome=completed`; open, paused, and aborted epochs remain visible in the ledger but cannot satisfy the sample gate. Do not retrofit usage onto an already-running thread, hand-estimate tokens, enable hooks, or automate rotation.
+
+### Codex Desktop fresh-thread bridge
+
+Codex Desktop currently owns an isolated stdio App Server connection, so an external sidecar cannot subscribe to that already-running connection. When the role must remain in Desktop, use the armed rollout bridge instead of a protocol proxy. The bridge must be armed after creating a blank non-ephemeral thread and before starting its first turn. It refuses any thread that already has a rollout file, so it cannot be used as a retrospective importer.
+
+```bash
+python3 scripts/desktop_rollout_usage_adapter.py arm \
+  --sessions-root ~/.codex/sessions \
+  --thread-id '<fresh-raw-thread-id>' \
+  --arm-path ~/.codex/orchestration-metrics/armed/architect-b01.json \
+  --path ~/.codex/orchestration-metrics/events.jsonl \
+  --epoch-id architect-b01 --thread-ref architect-b01 \
+  --mode baseline --role architect --cohort outcome-batch \
+  --model gpt-5.6-sol --reasoning ultra
+
+python3 scripts/desktop_rollout_usage_adapter.py collect \
+  --sessions-root ~/.codex/sessions \
+  --thread-id '<fresh-raw-thread-id>' \
+  --arm-path ~/.codex/orchestration-metrics/armed/architect-b01.json \
+  --path ~/.codex/orchestration-metrics/events.jsonl
+```
+
+Run `collect` repeatedly at safe checkpoints; replay is idempotent. Add `--outcome completed` only after the coherent role epoch is closed and no turn is active. Use `paused` or `aborted` when that is the truthful outcome. The raw thread id is accepted only to locate the local rollout and verify the arm; it is hashed in memory and is never persisted. The bridge ignores content-bearing records and persists only terminal usage counters plus compact generation numbers. It fails closed on a route mismatch, malformed rollout, active-turn close attempt, or format drift.
+
+Run its deterministic matrix with:
+
+```bash
+python3 scripts/test_desktop_rollout_usage_adapter.py -v
+```
+
+The bridge is a compatibility path for a fresh Desktop connection, not permission to mine historical rollouts. Direct App Server notifications remain the preferred source when the operator surface can expose the server-to-client stream safely.
 
 The new rules are project-agnostic. Project-specific model routing, business gates, credentials, machines, ports, and reporting cadence remain in each project's own instructions or live state card.

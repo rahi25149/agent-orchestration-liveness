@@ -31,6 +31,8 @@
 - `scripts/test_context_metrics.py`：schema 安全与决策阈值的确定性测试。
 - `scripts/app_server_usage_adapter.py`：严格合并 App Server 通知；每个已完成 turn 只持久化一条不含正文的用量记录。
 - `scripts/test_app_server_usage_adapter.py`：覆盖隐私、重放、乱序和失败闭合的确定性测试，以及需显式开启的真实 App Server 烟测。
+- `scripts/desktop_rollout_usage_adapter.py`：为无法直接旁路其独立 stdio App Server 连接的 Codex Desktop fresh thread 提供显式预武装桥接。
+- `scripts/test_desktop_rollout_usage_adapter.py`：覆盖预武装、精确路由、重放、压缩代次、隐私和终态边界的确定性测试。
 
 ## 上下文指标快速使用
 
@@ -78,6 +80,16 @@ RUN_CODEX_APP_SERVER_SMOKE=1 \
 ```
 
 只能把 `AppServerUsageAdapter.consume()` 接到受控 App Server 连接的“服务端到客户端”方向。独立 adapter 命令从 stdin 接收已存在的实时 JSONL tap，但它不是双向 App Server 代理。禁止把原始协议流写入磁盘。epoch 必须提供精确的角色、cohort、model 和 reasoning 路由；一旦发生模型改路由、混入多个 thread、缺少终态通知或缺少最终 usage，adapter 会失败闭合并要求新建或修正 epoch。
+
+Codex Desktop 当前持有隔离的 stdio App Server 连接，外部 sidecar 不能订阅已经运行的连接。角色必须留在 Desktop 时，可以使用 `desktop_rollout_usage_adapter.py`，但必须在创建空白非临时 thread 之后、首个 turn 开始之前执行 `arm`。已有 rollout 文件的 thread 会被拒绝，因此它不能用于回补历史数据。`collect` 可以在安全检查点重复执行且保持幂等；只有角色 epoch 真实闭合且没有活动 turn 时，才附加 `--outcome completed`。脚本不会把原始 thread ID、turn ID、rollout 路径或任何正文写入指标，只保存终态 token 计数和压缩代次；模型／推理路由变化、格式漂移、畸形记录或活动 turn 关闭都会失败闭合。
+
+运行 Desktop bridge 确定性矩阵：
+
+```bash
+python3 scripts/test_desktop_rollout_usage_adapter.py -v
+```
+
+该 bridge 只是在 fresh Desktop 连接无法安全旁路时的兼容路径，不授权读取历史 thread 来补造 baseline；能够安全获得 App Server 服务端到客户端通知时，仍优先使用正式 adapter。
 
 真实烟测通过只证明 adapter 机制成立。架构师与监督者应在各自下一次安全交接边界开始可比 baseline epoch，保持原生 compaction 与轮换行为不变，先收集至少 3 个 baseline epoch，再开始人工 fresh-thread pilot。报告只把以 `outcome=completed` 关闭的 epoch 纳入 token 样本；open、paused 和 aborted epoch 仍留在日志中，但不能满足样本门。不得给已运行中的 thread 反向补记用量，不得手工估算 token，也不得启用 hook 或自动轮换。
 

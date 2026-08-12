@@ -52,6 +52,8 @@ Daily token totals may help diagnose load, but must not decide whether a context
 
 Before changing compaction, handoff, fresh-thread rotation, role-state schemas, context-cost instrumentation, or the related stop and rollback gates, read [Context Lifecycle and Runtime Metrics](references/context-lifecycle-and-runtime-metrics.md) completely. Begin with its local Phase 0 recorder validation. Do not hand-estimate token usage, and do not enable hooks, thread automation, a collector, database, or dashboard until real App Server turn-usage capture is verified and the manual pilot has enough comparable samples without a substantive continuity regression.
 
+When Codex Desktop's isolated stdio App Server connection cannot be observed directly, use the reference's armed Desktop rollout bridge only for a blank non-ephemeral thread created through a controlled App Server connection. Arm it before the first turn, keep the exact model and reasoning route fixed for the epoch, and reject any existing unarmed rollout. This is a fresh-connection compatibility path, never a historical transcript importer.
+
 ## Issue bounded worker assignments
 
 Give each worker one compact work order containing:
