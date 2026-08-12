@@ -68,6 +68,8 @@ Next gate or follow-up boundary:
 
 Risk acceptance does not override an independent safety or policy prohibition.
 
+Treat this disposition as the architect's response, not as the finding state. Finding state and legal transitions are defined in `SKILL.md`; acknowledgement, blocker, and next-check boundary remain metadata.
+
 ## Finding update and closure
 
 When facts change before closure, send only the delta:
@@ -81,6 +83,14 @@ When the finding closes, name one current closing fact:
 ```text
 Finding ID | CLOSED | Closing fact
 ```
+
+When a new fact or successor finding replaces the original issue, use:
+
+```text
+Finding ID | SUPERSEDED | Replacement fact or successor finding
+```
+
+At a gate close, reconcile every related finding using [Outcome Batching and Review Budget](outcome-batching-and-review-budget.md). Leave an unresolved item explicitly `OPEN` with blocker, next-check boundary, and whether it blocks the claimed completion layer. Do not redefine the finding state machine in this template.
 
 ## When to use the exchange
 
