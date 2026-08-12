@@ -92,7 +92,9 @@ Allow a small-team architect to switch roles sequentially, but require the same 
 
 ## Consume technical review without duplicating it
 
-When a technical reviewer reports `CLEAR`, verify only:
+Use [Risk-Triggered Technical Review](technical-review-workflow.md) to decide whether review is required, define the review scope, interpret `TECH_CLEAR` or `TECH_BLOCKED`, and determine freshness.
+
+When a technical reviewer reports `TECH_CLEAR`, verify only:
 
 1. the review covers the current batch and latest candidate;
 2. required fixes entered the integrated result;
