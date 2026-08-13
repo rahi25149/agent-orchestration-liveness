@@ -128,13 +128,16 @@ class DesktopRolloutUsageAdapterTests(unittest.TestCase):
             identity=epoch_identity or identity(),
         )
 
-    def collect(self, outcome: str | None = None) -> dict[str, int | str | bool]:
+    def collect(
+        self, outcome: str | None = None, *, writer_release_proven: bool = False
+    ) -> dict[str, int | str | bool]:
         return desktop_adapter.collect_epoch(
             sessions_root=self.root,
             thread_id=THREAD_ID,
             arm_path=self.arm_path,
             metrics_path=self.metrics_path,
             outcome=outcome,
+            writer_release_proven=writer_release_proven,
         )
 
     def test_arm_refuses_an_existing_rollout_without_starting_epoch(self) -> None:
@@ -181,7 +184,9 @@ class DesktopRolloutUsageAdapterTests(unittest.TestCase):
         self.assertNotIn(str(path), raw_metrics)
         self.assertEqual(stat.S_IMODE(self.metrics_path.stat().st_mode), 0o600)
 
-        closed = self.collect("completed")
+        with self.assertRaisesRegex(desktop_adapter.DesktopRolloutError, "release proof"):
+            self.collect("completed")
+        closed = self.collect("completed", writer_release_proven=True)
         self.assertTrue(closed["epochClosed"])
         self.assertFalse(self.arm_path.exists())
         closes = [event for event in metrics.load_events(self.metrics_path) if event["event"] == "epoch_closed"]
@@ -195,9 +200,9 @@ class DesktopRolloutUsageAdapterTests(unittest.TestCase):
         self.assertTrue(result["openTurn"])
         self.assertEqual(result["appendedTurns"], 0)
         with self.assertRaisesRegex(desktop_adapter.DesktopRolloutError, "turn is active"):
-            self.collect("completed")
+            self.collect("completed", writer_release_proven=True)
         write_records(path, [terminal()], append=True)
-        result = self.collect("completed")
+        result = self.collect("completed", writer_release_proven=True)
         self.assertEqual(result["appendedTurns"], 1)
         self.assertTrue(result["epochClosed"])
 
@@ -294,6 +299,7 @@ class DesktopRolloutUsageAdapterTests(unittest.TestCase):
                 arm_path=self.arm_path,
                 metrics_path=self.metrics_path,
                 outcome=None,
+                writer_release_proven=False,
             )
         os.chmod(self.arm_path, 0o644)
         with self.assertRaisesRegex(desktop_adapter.DesktopRolloutError, "user-only"):

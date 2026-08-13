@@ -327,6 +327,7 @@ def collect_epoch(
     arm_path: Path,
     metrics_path: Path,
     outcome: str | None,
+    writer_release_proven: bool = False,
 ) -> dict[str, int | str | bool]:
     root = _require_sessions_root(sessions_root)
     raw_thread_id = _require_thread_id(thread_id)
@@ -394,6 +395,10 @@ def collect_epoch(
     if outcome is not None:
         if open_turn:
             raise DesktopRolloutError("cannot close an epoch while a turn is active")
+        if outcome == "completed" and not writer_release_proven:
+            raise DesktopRolloutError(
+                "completed outcome requires content-neutral writer release proof"
+            )
         closed = _append_close(resolved_metrics, identity, outcome)
         app_adapter.require_repository_external(arm_path).unlink(missing_ok=True)
     return {
@@ -426,6 +431,11 @@ def make_parser() -> argparse.ArgumentParser:
         command.add_argument("--path", type=Path, required=True, help="external metrics JSONL")
     _identity_args(arm)
     collect.add_argument("--outcome", choices=sorted(metrics.EPOCH_OUTCOMES))
+    collect.add_argument(
+        "--writer-release-proven",
+        action="store_true",
+        help="confirm content-neutral proof that no live process holds the thread writer",
+    )
     return parser
 
 
@@ -455,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
                 arm_path=args.arm_path,
                 metrics_path=args.path,
                 outcome=args.outcome,
+                writer_release_proven=args.writer_release_proven,
             )
         print(json.dumps(result, sort_keys=True))
     except (DesktopRolloutError, app_adapter.AdapterError, metrics.MetricsError, OSError) as exc:
