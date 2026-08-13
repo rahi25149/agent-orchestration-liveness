@@ -15,6 +15,24 @@ Apply the removal test:
 
 > If removing one work item would not change whether the shared acceptance passes, exclude that item from the batch.
 
+At batch opening, draw the smallest dependency, write-hotspot, and exclusive-resource graph needed to decide readiness. Keep active concurrency and evidence freshness as two independent obligations:
+
+- when at least two safe, relevant items are ready, depend on no shared unresolved fact, own different hotspots, and do not compete for one exclusive resource, dispatch them concurrently by default;
+- fill only the project-declared safe capacity with items that pass the removal test; numerical lane or Worktree counts are project-specific caps, never quotas, and never justify creating a Worktree, technical review, Supervisor, investigation, or acceptance lane merely to fill capacity;
+- during a long bounded wait, use idle capacity only on another ready hotspot that still passes the removal test; never duplicate the same test, environment action, or atomic outcome, and place an independently closable result in its own batch;
+- if fewer than two items qualify, record the concrete dependency, hotspot conflict, exclusive-resource limit, unstable authority fact, or failure-blast-radius reason;
+- do not split a single atomic outcome or create unrelated work merely to increase concurrency.
+
+For every dispatch, declare a semantic `verification_budget` with three layers:
+
+1. directly affected checks needed during implementation;
+2. stable-candidate checks needed once the candidate boundary is fixed;
+3. promotion or representative real-surface checks needed only for the claimed higher completion layer.
+
+Bind passing evidence to its exact candidate, covered scope, environment assumptions, and completion layer. Reuse it until one concrete invalidation fact appears: a covered candidate delta, repair of its failed check, relevant evidence or environment expiry, source conflict, or promotion that requires a new surface. A handoff, acknowledgement, ordinary commit, reviewer change, or same-batch repair outside the covered scope is not itself invalidation. Before repeating a test or review, name the invalidation fact; without one, reuse the evidence.
+
+Place expensive or broad checks at the latest safe stable-candidate boundary. For example, run a relevant production frontend typecheck or build after its stable candidate forms, fold a diff-integrity check into the pre-commit boundary, and run a long formal scenario against a clean commit-bound candidate rather than rerunning only to bind a revision. If that scenario exposes an in-scope defect, stop at the first stable failure. After a named repair changes the covered candidate, rerun only the invalidated scenario and direct dependencies; if the same stable failure recurs or the repair expands scope, the Architect re-scopes from current semantics, never from a universal repair-count limit. These are default budget rules, not permission to omit the first evidence required for funds, identity, authorization, idempotency, production, safety, or a truthful completion-layer claim.
+
 ## Decide whether to keep, split, pause, or close
 
 | Current fact | Batch action | Supervisor action |
@@ -36,7 +54,7 @@ Split when any one of these is true:
 - it adds a distinct high-risk, authority, production, or rollback boundary;
 - unrelated work is being added merely to keep a blocked batch looking active.
 
-Do not split merely because the batch has multiple owners, repositories, platforms, or internal repairs.
+Do not split merely because the batch has multiple owners, repositories, platforms, or internal repairs. An ordinary same-batch test, repair, commit, incremental technical re-review, or evidence handoff does not create a new outcome, Supervisor event, or user-reporting boundary.
 
 ## Separate material delta from liveness
 
