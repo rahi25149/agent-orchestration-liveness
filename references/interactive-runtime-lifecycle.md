@@ -39,6 +39,8 @@ Do not let two executable owners control the same desktop, browser account, devi
 
 ## Keep the session alive only for the task
 
+Before starting a Mock, development server, task-owned database helper, browser, keepalive, or other helper that exists only to serve an interactive chain, run one content-neutral surface preflight. Confirm the intended target and environment or account route, the exclusive operator, that the required session is currently connected, unlocked, and free of a login, verification, or UAC gate, and that every target instance and port is free or belongs to the declared owner. Do not start, stop, reuse, or adopt an unrelated or ambiguously owned runtime; report the resource conflict for Architect disposition while leaving it untouched. If the preflight finds a real user gate, start none of the dependent helpers and return the one minimal `USER_WAIT`; do not create runtime merely to rediscover the same gate. If it passes, establish the bounded task-owned continuity mechanism before starting the dependent helpers. This ordering does not apply to genuinely headless work whose declared outcome does not depend on the interactive session, does not prove the business capability, and must not become polling, approval, or repeated evidence collection. If session state changes after startup, clean up and classify the interruption under the existing rules.
+
 Use a bounded, recoverable, task-owned continuity mechanism when automatic sleep, idle lock, lease expiry, or session timeout would interrupt active work. Record enough identity to release only the resource created for this task.
 
 Do not change permanent host power policy, terminate another task's keepalive, or leave a keepalive running after the interactive phase ends.
