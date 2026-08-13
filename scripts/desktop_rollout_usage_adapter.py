@@ -395,9 +395,9 @@ def collect_epoch(
     if outcome is not None:
         if open_turn:
             raise DesktopRolloutError("cannot close an epoch while a turn is active")
-        if outcome == "completed" and not writer_release_proven:
+        if outcome in {"completed", "not_achieved"} and not writer_release_proven:
             raise DesktopRolloutError(
-                "completed outcome requires content-neutral writer release proof"
+                f"{outcome} outcome requires content-neutral writer release proof"
             )
         closed = _append_close(resolved_metrics, identity, outcome)
         app_adapter.require_repository_external(arm_path).unlink(missing_ok=True)

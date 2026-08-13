@@ -206,6 +206,42 @@ class DesktopRolloutUsageAdapterTests(unittest.TestCase):
         self.assertEqual(result["appendedTurns"], 1)
         self.assertTrue(result["epochClosed"])
 
+    def test_not_achieved_requires_release_proof_before_inconclusive_rotation(self) -> None:
+        self.arm()
+        write_records(
+            rollout_path(self.root),
+            [session_meta(), task_started(), turn_context(), token_count(), terminal()],
+        )
+        self.collect()
+        with self.assertRaisesRegex(desktop_adapter.DesktopRolloutError, "release proof"):
+            self.collect("not_achieved")
+
+        closed = self.collect("not_achieved", writer_release_proven=True)
+        self.assertTrue(closed["epochClosed"])
+        events = metrics.load_events(self.metrics_path)
+        closes = [event for event in events if event["event"] == "epoch_closed"]
+        self.assertEqual(
+            [(event["schemaVersion"], event["outcome"]) for event in closes],
+            [(2, "not_achieved")],
+        )
+        rotation = identity().base_event(
+            "rotation_completed",
+            "rotation:desktop-not-achieved",
+            "manual",
+        )
+        rotation.update(
+            {
+                "boundaryId": "handoff-desktop-not-achieved",
+                "result": "inconclusive",
+            }
+        )
+        metrics.append_event(self.metrics_path, rotation)
+        events = metrics.load_events(self.metrics_path)
+        self.assertEqual(
+            [event["result"] for event in events if event["event"] == "rotation_completed"],
+            ["inconclusive"],
+        )
+
     def test_route_mismatch_fails_closed(self) -> None:
         self.arm()
         write_records(

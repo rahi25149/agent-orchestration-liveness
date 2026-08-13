@@ -17,7 +17,8 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Iterable
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+READABLE_SCHEMA_VERSIONS = {1, SCHEMA_VERSION}
 MAX_LINE_BYTES = 4096
 EVENTS = {
     "epoch_started",
@@ -34,8 +35,18 @@ REASONING = {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"
 REGRESSION_KINDS = {"constraint_miss", "duplicate_work"}
 REGRESSION_IMPACTS = {"correction", "repeated_execution", "boundary_violation"}
 BOUNDARY_TYPES = {"compact", "rotation", "handoff"}
-ROTATION_RESULTS = {"accepted", "rolled_back"}
-EPOCH_OUTCOMES = {"completed", "paused", "aborted"}
+V1_ROTATION_RESULTS = {"accepted", "rolled_back"}
+ROTATION_RESULTS = {*V1_ROTATION_RESULTS, "inconclusive"}
+ROTATION_RESULTS_BY_SCHEMA = {
+    1: V1_ROTATION_RESULTS,
+    SCHEMA_VERSION: ROTATION_RESULTS,
+}
+V1_EPOCH_OUTCOMES = {"completed", "paused", "aborted"}
+EPOCH_OUTCOMES = {*V1_EPOCH_OUTCOMES, "not_achieved"}
+EPOCH_OUTCOMES_BY_SCHEMA = {
+    1: V1_EPOCH_OUTCOMES,
+    SCHEMA_VERSION: EPOCH_OUTCOMES,
+}
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$")
 SAFE_LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+:/-]{0,63}$")
 
@@ -130,8 +141,15 @@ def validate_event(record: Any) -> dict[str, Any]:
     if missing:
         raise MetricsError(f"missing required fields: {sorted(missing)}")
 
-    if record.get("schemaVersion") != SCHEMA_VERSION:
-        raise MetricsError(f"schemaVersion must equal {SCHEMA_VERSION}")
+    schema_version = record.get("schemaVersion")
+    if (
+        isinstance(schema_version, bool)
+        or not isinstance(schema_version, int)
+        or schema_version not in READABLE_SCHEMA_VERSIONS
+    ):
+        raise MetricsError(
+            f"schemaVersion must be one of {sorted(READABLE_SCHEMA_VERSIONS)}"
+        )
     parse_utc(record["at"])
     require_safe_id("eventId", record["eventId"])
     require_safe_id("epochId", record["epochId"])
@@ -148,8 +166,11 @@ def validate_event(record: Any) -> dict[str, Any]:
         raise MetricsError(f"source must be one of {sorted(SOURCES)}")
 
     if event == "epoch_closed":
-        if record.get("outcome") not in EPOCH_OUTCOMES:
-            raise MetricsError(f"outcome must be one of {sorted(EPOCH_OUTCOMES)}")
+        allowed_outcomes = EPOCH_OUTCOMES_BY_SCHEMA[schema_version]
+        if record.get("outcome") not in allowed_outcomes:
+            raise MetricsError(
+                f"outcome must be one of {sorted(allowed_outcomes)} for schemaVersion={schema_version}"
+            )
     elif event == "turn_completed":
         if record["source"] != "app_server":
             raise MetricsError("turn_completed requires source=app_server; do not hand-estimate token usage")
@@ -169,13 +190,16 @@ def validate_event(record: Any) -> dict[str, Any]:
     elif event == "rotation_completed":
         require_safe_id("boundaryId", record.get("boundaryId"))
         result = record.get("result")
-        if result not in ROTATION_RESULTS:
-            raise MetricsError(f"result must be one of {sorted(ROTATION_RESULTS)}")
+        allowed_results = ROTATION_RESULTS_BY_SCHEMA[schema_version]
+        if result not in allowed_results:
+            raise MetricsError(
+                f"result must be one of {sorted(allowed_results)} for schemaVersion={schema_version}"
+            )
         cold = require_nonnegative_int("coldStartTurns", record.get("coldStartTurns"), required=False)
         if result == "accepted" and (cold is None or cold < 1):
             raise MetricsError("accepted rotations require coldStartTurns >= 1")
-        if result == "rolled_back" and cold is not None:
-            raise MetricsError("rolled-back rotations must omit coldStartTurns")
+        if result in {"rolled_back", "inconclusive"} and cold is not None:
+            raise MetricsError(f"{result} rotations must omit coldStartTurns")
     elif event == "context_regression":
         if record.get("boundaryType") not in BOUNDARY_TYPES:
             raise MetricsError(f"boundaryType must be one of {sorted(BOUNDARY_TYPES)}")
@@ -192,14 +216,22 @@ def validate_event(record: Any) -> dict[str, Any]:
     return record
 
 
-def validate_epoch_consistency(events: Iterable[dict[str, Any]]) -> None:
+def validate_epoch_consistency(
+    events: Iterable[dict[str, Any]], *, require_terminal_rotations: bool = False
+) -> None:
     metadata: dict[str, tuple[str, str, str, str, str, str]] = {}
     starts: defaultdict[str, int] = defaultdict(int)
     closes: defaultdict[str, int] = defaultdict(int)
+    close_outcomes: dict[str, str] = {}
+    rotations: defaultdict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list)
+    close_positions: dict[str, int] = {}
+    schema_versions: defaultdict[str, list[int]] = defaultdict(list)
+    rotation_boundaries: dict[str, tuple[int, str]] = {}
     event_ids: set[str] = set()
     turn_indexes: defaultdict[str, set[int]] = defaultdict(set)
-    for event in events:
+    for position, event in enumerate(events):
         epoch_id = event["epochId"]
+        schema_versions[epoch_id].append(event["schemaVersion"])
         identity = (
             event["mode"],
             event["role"],
@@ -217,6 +249,18 @@ def validate_epoch_consistency(events: Iterable[dict[str, Any]]) -> None:
         event_ids.add(event_id)
         starts[epoch_id] += event["event"] == "epoch_started"
         closes[epoch_id] += event["event"] == "epoch_closed"
+        if event["event"] == "epoch_closed":
+            close_outcomes[epoch_id] = event["outcome"]
+            close_positions[epoch_id] = position
+        elif event["event"] == "rotation_completed":
+            rotations[epoch_id].append((position, event))
+            boundary_id = event["boundaryId"]
+            prior = rotation_boundaries.get(boundary_id)
+            if prior is not None and (prior[0] == SCHEMA_VERSION or event["schemaVersion"] == SCHEMA_VERSION):
+                raise MetricsError(
+                    f"rotation boundaryId {boundary_id} cannot be reused across v2 events"
+                )
+            rotation_boundaries[boundary_id] = (event["schemaVersion"], epoch_id)
         if event["event"] == "turn_completed":
             turn_index = event["turnIndex"]
             if turn_index in turn_indexes[epoch_id]:
@@ -227,6 +271,47 @@ def validate_epoch_consistency(events: Iterable[dict[str, Any]]) -> None:
             raise MetricsError(f"epoch {epoch_id} must contain exactly one epoch_started event")
         if closes[epoch_id] > 1:
             raise MetricsError(f"epoch {epoch_id} contains more than one epoch_closed event")
+        seen_v2 = False
+        for schema_version in schema_versions[epoch_id]:
+            if schema_version == SCHEMA_VERSION:
+                seen_v2 = True
+            elif seen_v2:
+                raise MetricsError(f"epoch {epoch_id} cannot downgrade from schemaVersion=2 to 1")
+
+        epoch_rotations = rotations[epoch_id]
+        v2_rotations = [item for _, item in epoch_rotations if item["schemaVersion"] == SCHEMA_VERSION]
+        if v2_rotations:
+            if len(epoch_rotations) != 1:
+                raise MetricsError(f"epoch {epoch_id} may contain only one v2 terminal rotation")
+            if closes[epoch_id] != 1:
+                raise MetricsError(f"epoch {epoch_id} v2 terminal rotation requires one epoch_closed event")
+            rotation_position, rotation = epoch_rotations[0]
+            if rotation_position < close_positions[epoch_id]:
+                raise MetricsError(f"epoch {epoch_id} v2 terminal rotation must follow epoch_closed")
+            expected_outcome = {
+                "accepted": "completed",
+                "rolled_back": "aborted",
+                "inconclusive": "not_achieved",
+            }[rotation["result"]]
+            if close_outcomes[epoch_id] != expected_outcome:
+                raise MetricsError(
+                    f"epoch {epoch_id} rotation result={rotation['result']} requires outcome={expected_outcome}"
+                )
+
+        if close_outcomes.get(epoch_id) == "not_achieved" and epoch_rotations:
+            if len(epoch_rotations) != 1 or epoch_rotations[0][1].get("result") != "inconclusive":
+                raise MetricsError(
+                    f"epoch {epoch_id} with outcome=not_achieved permits only one inconclusive rotation"
+                )
+        if require_terminal_rotations and close_outcomes.get(epoch_id) == "not_achieved" and not epoch_rotations:
+            raise MetricsError(
+                f"epoch {epoch_id} with outcome=not_achieved requires an inconclusive rotation"
+            )
+
+
+def validate_terminal_consistency(events: Iterable[dict[str, Any]]) -> None:
+    """Reject valid append intermediates that are incomplete as terminal reports."""
+    validate_epoch_consistency(events, require_terminal_rotations=True)
 
 
 def check_secure_file(path: Path) -> None:
@@ -253,6 +338,8 @@ def parse_event_lines(lines: Iterable[bytes]) -> list[dict[str, Any]]:
 
 def append_event(path: Path, record: dict[str, Any]) -> None:
     validate_event(record)
+    if record["schemaVersion"] != SCHEMA_VERSION:
+        raise MetricsError(f"new events must use schemaVersion={SCHEMA_VERSION}")
     path = path.expanduser()
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     if path.exists() and path.is_symlink():
@@ -300,13 +387,17 @@ def nearest_rank_p90(values: list[int]) -> int | None:
 
 
 def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
+    validate_terminal_consistency(events)
     groups: defaultdict[tuple[str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
     daily_totals: defaultdict[str, int] = defaultdict(int)
+    rotation_results: defaultdict[str, int] = defaultdict(int)
     for event in events:
         key = (event["role"], event["cohort"], event["model"], event["reasoning"])
         groups[key].append(event)
         if event["event"] == "turn_completed":
             daily_totals[event["at"][:10]] += event["totalTokens"]
+        elif event["event"] == "rotation_completed":
+            rotation_results[event["result"]] += 1
 
     results = []
     for key, items in sorted(groups.items()):
@@ -438,7 +529,10 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "schemaVersion": SCHEMA_VERSION,
         "decisionMetrics": results,
-        "diagnosticsOnly": {"dailyTotalTokens": dict(sorted(daily_totals.items()))},
+        "diagnosticsOnly": {
+            "dailyTotalTokens": dict(sorted(daily_totals.items())),
+            "rotationAttemptsByResult": dict(sorted(rotation_results.items())),
+        },
     }
 
 
@@ -539,6 +633,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": "appended", "event": record["event"], "epochId": record["epochId"]}))
         elif args.command == "validate":
             events = load_events(args.path)
+            validate_terminal_consistency(events)
             print(json.dumps({"status": "valid", "events": len(events)}))
         else:
             events = load_events(args.path)

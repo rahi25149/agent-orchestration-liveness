@@ -16,7 +16,7 @@ import context_metrics as metrics
 
 def base_event(epoch_id: str, mode: str, event: str, **extra: object) -> dict[str, object]:
     record: dict[str, object] = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "eventId": f"{epoch_id}:{event}",
         "at": "2026-08-12T00:00:00Z",
         "event": event,
@@ -31,6 +31,16 @@ def base_event(epoch_id: str, mode: str, event: str, **extra: object) -> dict[st
     }
     record.update(extra)
     return record
+
+
+def v2_event(epoch_id: str, mode: str, event: str, **extra: object) -> dict[str, object]:
+    extra.setdefault("schemaVersion", 2)
+    return base_event(epoch_id, mode, event, **extra)
+
+
+def v1_event(epoch_id: str, mode: str, event: str, **extra: object) -> dict[str, object]:
+    extra.setdefault("schemaVersion", 1)
+    return base_event(epoch_id, mode, event, **extra)
 
 
 def passing_events() -> list[dict[str, object]]:
@@ -53,6 +63,7 @@ def passing_events() -> list[dict[str, object]]:
                     totalTokens=token_count + 100,
                 )
             )
+            events.append(base_event(epoch_id, mode, "epoch_closed", outcome="completed"))
             if mode == "pilot":
                 events.append(
                     base_event(
@@ -64,7 +75,6 @@ def passing_events() -> list[dict[str, object]]:
                         coldStartTurns=1,
                     )
                 )
-            events.append(base_event(epoch_id, mode, "epoch_closed", outcome="completed"))
     return events
 
 
@@ -101,6 +111,141 @@ def append_cli_args(path: Path, epoch_id: str, *, event_id: str | None = None) -
 
 
 class ContextMetricsTests(unittest.TestCase):
+    def test_v1_events_remain_readable(self) -> None:
+        events = [
+            v1_event("legacy-1", "baseline", "epoch_started"),
+            v1_event("legacy-1", "baseline", "epoch_closed", outcome="paused"),
+        ]
+        validated = [metrics.validate_event(event) for event in events]
+        metrics.validate_epoch_consistency(validated)
+        self.assertTrue(all(event["schemaVersion"] == 1 for event in validated))
+
+    def test_v2_adds_not_achieved_but_v1_and_unknown_versions_reject_it(self) -> None:
+        accepted = metrics.validate_event(
+            v2_event("v2-1", "baseline", "epoch_closed", outcome="not_achieved")
+        )
+        self.assertEqual(accepted["outcome"], "not_achieved")
+
+        with self.assertRaisesRegex(metrics.MetricsError, "schemaVersion=1"):
+            metrics.validate_event(
+                v1_event("legacy-1", "baseline", "epoch_closed", outcome="not_achieved")
+            )
+        with self.assertRaisesRegex(metrics.MetricsError, "schemaVersion must be one of"):
+            metrics.validate_event(
+                v2_event("future-1", "baseline", "epoch_started", schemaVersion=3)
+            )
+
+    def test_v2_not_achieved_epoch_requires_inconclusive_if_rotation_is_recorded(self) -> None:
+        events = [
+            v2_event("pilot-no-outcome", "pilot", "epoch_started"),
+            v2_event(
+                "pilot-no-outcome",
+                "pilot",
+                "epoch_closed",
+                outcome="not_achieved",
+            ),
+            v2_event(
+                "pilot-no-outcome",
+                "pilot",
+                "rotation_completed",
+                boundaryId="rotation-no-outcome",
+                result="inconclusive",
+            ),
+        ]
+        metrics.validate_epoch_consistency(
+            [metrics.validate_event(event) for event in events]
+        )
+
+        invalid = [dict(event) for event in events]
+        invalid[-1]["result"] = "accepted"
+        invalid[-1]["coldStartTurns"] = 1
+        with self.assertRaisesRegex(metrics.MetricsError, "requires outcome=completed"):
+            metrics.validate_epoch_consistency(
+                [metrics.validate_event(event) for event in invalid]
+            )
+
+        with self.assertRaisesRegex(metrics.MetricsError, "requires an inconclusive rotation"):
+            metrics.build_report(
+                [metrics.validate_event(event) for event in events[:-1]]
+            )
+
+    def test_v2_rotation_terminal_must_follow_close_and_boundary_cannot_be_reused(self) -> None:
+        before_close = [
+            v2_event("pilot-order", "pilot", "epoch_started"),
+            v2_event(
+                "pilot-order",
+                "pilot",
+                "rotation_completed",
+                boundaryId="rotation-order",
+                result="accepted",
+                coldStartTurns=1,
+            ),
+            v2_event("pilot-order", "pilot", "epoch_closed", outcome="completed"),
+        ]
+        with self.assertRaisesRegex(metrics.MetricsError, "must follow epoch_closed"):
+            metrics.validate_epoch_consistency(
+                [metrics.validate_event(event) for event in before_close]
+            )
+
+        repeated_boundary = [
+            v2_event("pilot-boundary-1", "pilot", "epoch_started"),
+            v2_event("pilot-boundary-1", "pilot", "epoch_closed", outcome="not_achieved"),
+            v2_event(
+                "pilot-boundary-1",
+                "pilot",
+                "rotation_completed",
+                boundaryId="rotation-reused",
+                result="inconclusive",
+            ),
+            v2_event("pilot-boundary-2", "pilot", "epoch_started"),
+            v2_event("pilot-boundary-2", "pilot", "epoch_closed", outcome="completed"),
+            v2_event(
+                "pilot-boundary-2",
+                "pilot",
+                "rotation_completed",
+                boundaryId="rotation-reused",
+                result="accepted",
+                coldStartTurns=1,
+            ),
+        ]
+        with self.assertRaisesRegex(metrics.MetricsError, "cannot be reused"):
+            metrics.validate_epoch_consistency(
+                [metrics.validate_event(event) for event in repeated_boundary]
+            )
+
+    def test_v2_inconclusive_is_versioned_and_omits_cold_start_turns(self) -> None:
+        accepted = metrics.validate_event(
+            v2_event(
+                "v2-inconclusive",
+                "baseline",
+                "rotation_completed",
+                boundaryId="rotation-v2-inconclusive",
+                result="inconclusive",
+            )
+        )
+        self.assertEqual(accepted["result"], "inconclusive")
+        with self.assertRaisesRegex(metrics.MetricsError, "schemaVersion=1"):
+            metrics.validate_event(
+                v1_event(
+                    "v1-inconclusive",
+                    "baseline",
+                    "rotation_completed",
+                    boundaryId="rotation-v1-inconclusive",
+                    result="inconclusive",
+                )
+            )
+        with self.assertRaisesRegex(metrics.MetricsError, "must omit coldStartTurns"):
+            metrics.validate_event(
+                v2_event(
+                    "v2-inconclusive-cold",
+                    "baseline",
+                    "rotation_completed",
+                    boundaryId="rotation-v2-inconclusive-cold",
+                    result="inconclusive",
+                    coldStartTurns=1,
+                )
+            )
+
     def test_append_secures_file_and_validates(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "events.jsonl"
@@ -147,6 +292,48 @@ class ContextMetricsTests(unittest.TestCase):
         self.assertEqual(result["medianInputTokens"]["baseline"], 1000.0)
         self.assertEqual(result["decision"], "pass")
 
+    def test_report_excludes_v2_not_achieved_epoch_from_samples(self) -> None:
+        events = passing_events()
+        epoch_id = "baseline-not-achieved"
+        events.extend(
+            [
+                v2_event(epoch_id, "baseline", "epoch_started"),
+                v2_event(
+                    epoch_id,
+                    "baseline",
+                    "turn_completed",
+                    eventId=f"{epoch_id}:turn:1",
+                    source="app_server",
+                    turnIndex=1,
+                    inputTokens=1,
+                    cachedInputTokens=0,
+                    totalTokens=1,
+                ),
+                v2_event(
+                    epoch_id,
+                    "baseline",
+                    "epoch_closed",
+                    outcome="not_achieved",
+                ),
+                v2_event(
+                    epoch_id,
+                    "baseline",
+                    "rotation_completed",
+                    boundaryId="rotation-baseline-not-achieved",
+                    result="inconclusive",
+                ),
+            ]
+        )
+        report = metrics.build_report([metrics.validate_event(item) for item in events])
+        result = report["decisionMetrics"][0]
+        self.assertEqual(result["epochs"]["baseline"], 3)
+        self.assertEqual(result["turns"]["baseline"], 3)
+        self.assertEqual(result["medianInputTokens"]["baseline"], 1000.0)
+        self.assertEqual(
+            report["diagnosticsOnly"]["rotationAttemptsByResult"]["inconclusive"],
+            1,
+        )
+
     def test_two_regressions_in_first_five_rotations_roll_back(self) -> None:
         events = passing_events()
         for number, kind in ((2, "constraint_miss"), (5, "duplicate_work")):
@@ -177,16 +364,13 @@ class ContextMetricsTests(unittest.TestCase):
         self.assertEqual(result["decision"], "rollback")
         self.assertIn("two_rotations_need_second_context_turn_in_first_five", result["rollbackReasons"])
 
-    def test_accepted_rotation_from_aborted_epoch_does_not_count(self) -> None:
+    def test_accepted_rotation_from_aborted_v2_epoch_is_rejected(self) -> None:
         events = passing_events()
         for event in events:
             if event["epochId"] == "pilot-5" and event["event"] == "epoch_closed":
                 event["outcome"] = "aborted"
-        report = metrics.build_report([metrics.validate_event(item) for item in events])
-        result = report["decisionMetrics"][0]
-        self.assertEqual(result["epochs"]["pilot"], 4)
-        self.assertEqual(result["acceptedRotations"], 4)
-        self.assertEqual(result["decision"], "insufficient_data")
+        with self.assertRaisesRegex(metrics.MetricsError, "requires outcome=completed"):
+            metrics.build_report([metrics.validate_event(item) for item in events])
 
     def test_rolled_back_attempts_count_toward_first_five_regression_gate(self) -> None:
         events = passing_events()
@@ -320,6 +504,105 @@ class ContextMetricsTests(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(json.loads(reported.stdout)["decisionMetrics"][0]["decision"], "pass")
+
+    def test_cli_new_writes_use_schema_v2(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "events.jsonl"
+            result = subprocess.run(
+                append_cli_args(path, "new-v2"),
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(json.loads(result.stdout)["status"], "appended")
+            self.assertEqual(metrics.load_events(path)[0]["schemaVersion"], 2)
+
+    def test_mixed_v1_v2_ledger_is_valid_and_only_completed_epoch_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "events.jsonl"
+            mixed_events = [
+                v1_event("mixed-open-v1", "baseline", "epoch_started"),
+                v1_event(
+                    "mixed-open-v1",
+                    "baseline",
+                    "turn_completed",
+                    eventId="mixed-open-v1:turn:1",
+                    source="app_server",
+                    turnIndex=1,
+                    inputTokens=10,
+                    cachedInputTokens=0,
+                    totalTokens=10,
+                ),
+                v2_event(
+                    "mixed-open-v1",
+                    "baseline",
+                    "epoch_closed",
+                    outcome="not_achieved",
+                ),
+                v2_event(
+                    "mixed-open-v1",
+                    "baseline",
+                    "rotation_completed",
+                    boundaryId="rotation-mixed-open-v1",
+                    result="inconclusive",
+                ),
+                v2_event("new-v2-completed", "baseline", "epoch_started"),
+                v2_event(
+                    "new-v2-completed",
+                    "baseline",
+                    "turn_completed",
+                    eventId="new-v2-completed:turn:1",
+                    source="app_server",
+                    turnIndex=1,
+                    inputTokens=200,
+                    cachedInputTokens=20,
+                    totalTokens=220,
+                ),
+                v2_event(
+                    "new-v2-completed",
+                    "baseline",
+                    "epoch_closed",
+                    outcome="completed",
+                ),
+            ]
+            historical = mixed_events[:2]
+            path.write_text(
+                "".join(json.dumps(event, separators=(",", ":")) + "\n" for event in historical),
+                encoding="utf-8",
+            )
+            path.chmod(0o600)
+            for event in mixed_events[2:]:
+                metrics.append_event(path, event)
+
+            loaded = metrics.load_events(path)
+            self.assertEqual({event["schemaVersion"] for event in loaded}, {1, 2})
+            result = metrics.build_report(loaded)["decisionMetrics"][0]
+            self.assertEqual(result["epochs"]["baseline"], 1)
+            self.assertEqual(result["turns"]["baseline"], 1)
+            self.assertEqual(result["medianInputTokens"]["baseline"], 200.0)
+            self.assertEqual(
+                metrics.build_report(loaded)["diagnosticsOnly"]["rotationAttemptsByResult"]["inconclusive"],
+                1,
+            )
+
+    def test_writer_rejects_new_v1_events_and_epoch_version_downgrade(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "events.jsonl"
+            with self.assertRaisesRegex(metrics.MetricsError, "new events must use schemaVersion=2"):
+                metrics.append_event(path, v1_event("legacy-new", "baseline", "epoch_started"))
+
+            start = v2_event("downgrade", "baseline", "epoch_started")
+            path.write_text(json.dumps(start, separators=(",", ":")) + "\n", encoding="utf-8")
+            path.chmod(0o600)
+            with self.assertRaisesRegex(metrics.MetricsError, "cannot downgrade"):
+                metrics.validate_epoch_consistency(
+                    [
+                        metrics.validate_event(start),
+                        metrics.validate_event(
+                            v1_event("downgrade", "baseline", "epoch_closed", outcome="completed")
+                        ),
+                    ]
+                )
 
     def test_malformed_and_partial_jsonl_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
