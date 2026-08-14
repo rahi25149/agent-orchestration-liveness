@@ -14,6 +14,8 @@ description: Coordinate long-running or multi-agent work requiring Architect/Wor
 
 把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。低风险、可逆、局部可测的变更不建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
 
+编排复杂度必须匹配已证的协调或连续性风险。单 Agent、单 owner 且可有界闭合、无此类风险的任务，不因本 Skill 新增 Supervisor、Controller、heartbeat、handoff/rotation 或 context protocol；独立安全规则仍照常适用。
+
 ## 维护最小当前事实
 
 维护一张有界 state card，至少记录：当前 objective/gate 与 acceptance boundary、outcome batch、active owner 与 hotspot、独占 operator、每项 assignment 的 next observable checkpoint、真实外部 wait、最高已证 completion layer、OPEN findings、最近 material delta、下一安全动作，以及是否真的需要用户。
@@ -73,7 +75,7 @@ Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返
 
 ## 运行独立监督
 
-Heartbeat review 只在用户、项目或当前目标声明的 cadence/next boundary 运行；未声明 cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。相关工作健康时保持静默。只有 externally verifiable outcome、acceptance、authority/risk、completion layer、exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 等 material event 才创建 fresh、read-only、short-lived Supervisor review。其 bootstrap 只含 latest Architect authority snapshot、Supervisor overlay 与相关 OPEN findings；结果返回后结束线程，只把 disposition 与 finding transition 留在 overlay。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
+Heartbeat review 只在用户、项目或当前目标声明的 cadence/next boundary 运行；未声明 cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。相关工作健康时保持静默。仅当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达其 next-check boundary 时，才创建 fresh、read-only、short-lived Supervisor review。其 bootstrap 只含 latest Architect authority snapshot、Supervisor overlay 与相关 OPEN findings；结果返回后结束线程，只把 disposition 与 finding transition 留在 overlay。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
 
 每个 actionable finding 使用稳定 ID，并保持 OPEN，直到一个当前事实把它变为 CLOSED 或 SUPERSEDED；复发创建新 finding。Architect disposition 只能是 ACCEPTED、PARTIALLY_ACCEPTED 或 REJECTED_WITH_EVIDENCE，它不是 finding state。Gate 关闭时不得让 OPEN finding 静默消失。
 
