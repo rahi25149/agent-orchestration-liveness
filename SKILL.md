@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration-liveness
-description: Coordinate long-running or multi-agent work that needs Architect/Worker/Supervisor separation, bounded ownership, liveness checks, truthful completion, low-noise reporting, safe handoff, context rotation, context-cost experiments, or long-lived browser, desktop, and device sessions. Do not use for short single-owner tasks, routine code review, project-specific product planning, or direct machine operation.
+description: Coordinate long-running or multi-agent work requiring Architect/Worker/Supervisor separation, bounded ownership, liveness, low-noise reporting, truthful completion, safe handoffs, agent-context lifecycle management or measurement, or orchestration of long-lived browser, desktop, device, or remote sessions. Do not use for short single-owner work, routine code review, standalone product planning, or one-off machine operation without orchestration needs.
 ---
 
 # Agent Orchestration Liveness
@@ -48,6 +48,8 @@ Architect 在新 gate、batch 开闭、Worker completion handshake 和独占资�
 - **COMPLETED**：声明的 gate 与全部 required handoff 均已闭合。
 
 Activity 不等于进展。编译修复、必要测试、migration、依赖恢复和集成可保持 ACTIVE_WORK，但必须说明正在减少的依赖或未知与下一边界。授权内、可逆、本地的 owned action 不是 USER_WAIT；evidence required 不等于 approval required。
+
+不得因与当前 ready bounded action 无关的 governance 延迟执行。只有在当前触发点由本 Skill、项目契约或独立安全规则明确要求，且直接保护该动作的 Goal/stop/budget、ownership/authority、authorization/approval、safety、handoff、completion truth 或 irreversible effects 的检查与 reference，才是 fail-closed 前置条件。此类必要事实缺失、过期、歧义或 lifecycle 不受支持时不得推进。例行或 advisory Supervisor review 不是 approval gate，除非明确要求暂停受影响动作。
 
 Worker 完成时返回一个压缩 packet：assignment/outcome batch、当前 gate 与 acceptance boundary、结果与状态变化、最高已证层、first stable failure、owned runtime/config/resource/pending 的安全状态、唯一允许下一动作、是否需要用户及稳定原因、technical-review disposition。Architect 必须确认后只做三选一：关闭 assignment/gate、派发下一 bounded action 与 owner，或声明真实的 bounded/user wait。工具结束本身不构成闭环；BLOCKED 只是输出协议，实际 liveness 仍按缺失事实的 owner 与性质分类。
 
