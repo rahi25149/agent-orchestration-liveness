@@ -75,7 +75,11 @@ Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返
 
 ## 运行独立监督
 
-Heartbeat review 只在用户、项目或当前目标声明的 cadence/next boundary 运行；未声明 cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。相关工作健康时保持静默。仅当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达其 next-check boundary 时，才创建 fresh、read-only、short-lived Supervisor review。其 bootstrap 只含 latest Architect authority snapshot、Supervisor overlay 与相关 OPEN findings；结果返回后结束线程，只把 disposition 与 finding transition 留在 overlay。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
+Heartbeat 与 liveness-only review 只在用户、项目或当前目标声明的 cadence/checkpoint、completion-ACK deadline 或 retry-cap boundary 运行；未声明 recurring cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。它保持原 batch，不自动成为 material event review 或新 finding。需要判断 OPEN finding 状态的 follow-up 属于一次 material review；若同时命中 liveness boundary，合并到该次 review，绝不另跑一次 liveness-only review。工具调用、commentary、同因支撑重试或状态轮询只有在产生 gate-relevant 新事实、减少声明的依赖或未知时，才重置 last-material-progress boundary。相关工作健康时保持静默。
+
+只有存在明确的跨 review-boundary 监督义务时，才维护一个 gate-scoped、read-only Supervisor，例如 OPEN finding、已声明的 recurring heartbeat/checkpoint、completion ACK 后续检查或 finding follow-up。预计耗时长、GUI/remote 或独占资源本身只提高风险，不单独触发持续 Supervisor。同一 gate 最多一个；其 epoch 只覆盖一个 gate、outcome batch 或 related finding cluster，并只持有不超过 2 KiB 的 Supervisor overlay：reviewed Architect revision、稳定 finding IDs/states、last gate-relevant progress、last review boundary 与 next supervision boundary。每次复核仍抽样最小当前事实，不复制完整 gate、业务计划、日志或 transcript。
+
+当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 时，执行 material event review；已有 gate-scoped Supervisor 时复用它，不创建第二个，也不在 finding 与其紧邻复审之间轮换。没有跨边界持续义务的离散 event review 才使用 fresh、read-only、short-lived Supervisor，结果返回后结束线程。Gate close、暂停、真实 USER_WAIT、确无安全下一动作或监督价值结束时，先 reconcile findings，再结束 gate-scoped Supervisor；context pressure 下只在安全边界用 bounded overlay 做 Supervisor-to-Supervisor handoff。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
 
 每个 actionable finding 使用稳定 ID，并保持 OPEN，直到一个当前事实把它变为 CLOSED 或 SUPERSEDED；复发创建新 finding。Architect disposition 只能是 ACCEPTED、PARTIALLY_ACCEPTED 或 REJECTED_WITH_EVIDENCE，它不是 finding state。Gate 关闭时不得让 OPEN finding 静默消失。
 

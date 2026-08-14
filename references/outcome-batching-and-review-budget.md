@@ -74,6 +74,8 @@ Use material delta to decide whether to open a new event-review boundary. Treat 
 
 Use the next observable checkpoint to decide whether existing work is alive. Every `ACTIVE_WORK` item must name the next fact expected from execution, not merely a vague duration. Examples include a completion packet, first stable failure, dependency response, integrated observation, or handoff decision.
 
+A tool call, commentary message, status poll, or support-mechanism retry is not fresh progress unless it produces a gate-relevant fact or reduces the declared dependency or unknown; otherwise it does not reset the last-material-progress clock. At a project-declared completion-ack deadline, retry-cap boundary, recurring cadence, or checkpoint, run one liveness-only recheck even without material delta. Reuse the gate-scoped Supervisor when one already owns a continuing review obligation. Otherwise use a fresh one-time read-only review, and keep it gate-scoped only if the result creates or confirms an obligation that crosses another review boundary.
+
 If the checkpoint passes:
 
 - fresh relevant execution fact: keep `ACTIVE_WORK` and set the next checkpoint;
