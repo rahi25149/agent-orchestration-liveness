@@ -15,12 +15,14 @@ Apply the removal test:
 
 > If removing one work item would not change whether the shared acceptance passes, exclude that item from the batch.
 
-At batch opening, draw the smallest dependency, write-hotspot, and exclusive-resource graph needed to decide readiness. Keep active concurrency and evidence freshness as two independent obligations:
+At batch opening, draw the smallest dependency, write-hotspot, and exclusive-resource graph needed to decide readiness. Rescan it after every Worker completion handshake, at batch close or the next batch opening, and when an active item enters an exclusive-resource wait. The rescan is mandatory, but it records only candidates actually found and never requires filling a lane quota. Keep active concurrency and evidence freshness as two independent obligations:
 
-- when at least two safe, relevant items are ready, depend on no shared unresolved fact, own different hotspots, and do not compete for one exclusive resource, dispatch them concurrently by default;
+- treat different write hotspots as necessary but insufficient for independence: qualifying items must also share no unresolved contract, ordered acceptance, exclusive fixture or resource, and must be independently verifiable;
+- when at least two safe, relevant items qualify, dispatch them concurrently by default;
 - fill only the project-declared safe capacity with items that pass the removal test; numerical lane or Worktree counts are project-specific caps, never quotas, and never justify creating a Worktree, technical review, Supervisor, investigation, or acceptance lane merely to fill capacity;
-- during a long bounded wait, use idle capacity only on another ready hotspot that still passes the removal test; never duplicate the same test, environment action, or atomic outcome, and place an independently closable result in its own batch;
-- if fewer than two items qualify, record the concrete dependency, hotspot conflict, exclusive-resource limit, unstable authority fact, or failure-blast-radius reason;
+- during a long bounded wait, use idle capacity only on another ready hotspot that still passes the removal test; an exclusive GUI, device, account, fixture, or runtime freezes only candidates that require it. Never duplicate the same test, environment action, or atomic outcome, and place an independently closable result in its own batch;
+- keep one compact internal decision: `READY_LANE_DECISION: candidate_count=<n>; independent_ready=<n>; action=<CONCURRENT_DISPATCH|SERIAL>; reason=<fact|NONE>`. Do not add it to experiment metrics, require Supervisor approval, or report it to the user as routine lifecycle noise;
+- if fewer than two items qualify, record the concrete dependency, hotspot conflict, exclusive-resource limit, unstable authority fact, ordered acceptance, shared unresolved contract, shared fixture, or failure-blast-radius reason. Reusing one Worktree or stating that work is currently serial is not enough;
 - do not split a single atomic outcome or create unrelated work merely to increase concurrency.
 
 For every dispatch, declare a semantic `verification_budget` with three layers:
