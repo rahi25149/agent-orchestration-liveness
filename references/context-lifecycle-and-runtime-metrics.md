@@ -18,7 +18,7 @@ Compaction is a context safety valve. It is not a workflow database and cannot m
 
 Keep two deliberately asymmetric role files outside the project repository:
 
-- **Architect authority snapshot**: the current objective, gate, outcome batch, owners, hotspots, verified facts, authorization boundary, blockers, highest proven layer, next safe action, and facts the next thread must not assume.
+- **Architect authority snapshot**: the current objective, gate, outcome batch, owners, hotspots, verified facts, authorization boundary, blockers, highest proven layer, next safe action, facts the next thread must not assume, and—when persisted Goal continuity is required—only the opaque Goal revision, lifecycle status, transfer state, declared budget scope, and ephemeral transfer-envelope reference.
 - **Supervisor overlay**: the Architect revision it reviewed, open findings, last event and communication-review boundaries, latest supervision delta, and next supervision action.
 
 The Supervisor overlay must not copy the complete gate, owner map, or execution plan. It refers to the Architect revision and stores only independent supervision state.
@@ -35,6 +35,8 @@ Use one writer per role. Increase a monotonic revision only for a material delta
 
 Never store credentials, cookies, personal data, prompts, replies, transcripts, logs, diffs, command output, or sensitive authorization material in role state. An authorization field records what class of action is allowed, not the secret that enables it.
 
+A persisted Goal is a separate thread-scoped continuation contract. Do not copy its exact objective into the 3 KiB Architect state or metrics ledger, where it could be truncated, duplicated, or become a competing source of truth. Keep the exact incumbent-signed objective and its completion and stop conditions only in the incumbent Goal, one exact one-time transfer envelope, and the successor Goal after staging. The controller may transmit that envelope mechanically and hold only its opaque reference while the handoff is open; it must clear that reference when the handoff closes and must not summarize, edit, infer, or retain the envelope as experiment history.
+
 ## Rotate at a safe boundary
 
 Normal rotation requires both:
@@ -48,6 +50,7 @@ A safe boundary means:
 - the coherent outcome batch is closed or at a stable candidate boundary;
 - no completion packet still needs an Architect decision;
 - no atomic browser, desktop, device, funds, deployment, or other exclusive operation is in flight;
+- when persisted Goal continuity is required, neither an incumbent continuation nor a Goal-management operation is in flight or queued, and the Goal transfer envelope and budget scope are current;
 - immediately before `thread/start`, every named Architect, Worker, reviewer, and exclusive operator has been rechecked for a queued or resumed action after the stop boundary;
 - owners, hotspots, waits, findings, and the next safe action are in the bounded role state;
 - the new role thread can verify the smallest direct current facts without replaying the project.
@@ -66,6 +69,20 @@ Hard rotation does not wait for a normal boundary when continuity is already unt
 
 Create a fresh thread with the role contract, bounded role state, current assignment, and only the necessary recent handoff. Do not use a full-history fork as a context reset. Reuse the existing branch, Worktree, and owner when that remains correct.
 
+When the incumbent already has a persisted Goal, or the user or project requires one, the fresh thread does not inherit it from the project, authority snapshot, or bootstrap. Require an incumbent-signed one-time Goal transfer envelope containing the exact objective, lifecycle, completion and stop conditions, token budget and usage when present, declared budget scope, and an opaque Goal revision. If a required incumbent Goal or exact envelope is missing, return `BLOCKED: ARCHITECT_GOAL_UNDECLARED`. Do not impose this gate on an ordinary one-off Architect task for which no Goal was present or required.
+
+Stage the successor Goal with the exact objective in `paused` state and read it back before authority transfer. A staged candidate has no business authority and may not dispatch, write, start runtime, or rely on automatic continuation. At the final boundary, use this fail-closed freeze sequence:
+
+1. verify no incumbent or peer turn, automatic continuation, completion packet, or exclusive action is in flight or queued;
+2. pause the incumbent Goal and read it back;
+3. recheck that no incumbent continuation became queued across the pause boundary;
+4. transfer authority to the successor while both Goals remain paused;
+5. activate the successor Goal and read back its exact objective, active status, and declared budget policy before permitting business action.
+
+Do not call that sequence atomic. Prefer a short interval with neither Goal active over any interval with both active. If successor activation or verification fails before a successor business action, first pause and verify the successor, then return authority to the incumbent, then resume and verify the incumbent. If any read, queue state, or lifecycle remains ambiguous, leave both Goals paused, permit no business action, and return `BLOCKED: PERSISTENT_GOAL_STATE_UNVERIFIED`; never guess that rollback succeeded. A normal prompt containing the same words is not persisted-Goal evidence, and a runtime without a supported Goal set/read surface cannot complete a required Goal-aware handoff.
+
+Do not infer budget scope from the runtime counters. If the signed envelope declares one cross-thread product-Goal cap, set the successor budget to `max(0, incumbent tokenBudget - incumbent tokensUsed)` as a new handoff safety cap, not as inherited usage accounting. If it declares a per-thread cap, use the declared successor amount. If it declares no budget, preserve no budget. If a budget exists but its scope is undeclared, keep the successor paused and block transfer. Preserve a paused Goal as paused; do not revive a terminal or budget-limited Goal without a new Architect or user decision.
+
 For an Architect, the bootstrap should contain the role and authority contract, freshness marker, current gate and completion layer, current owner and hotspot, one next action, applicable authorization and stop boundaries, and only the facts needed for that action. Point to the bounded Architect authority snapshot instead of copying its full acceptance matrix, historical adjudications, or old lifecycle detail into the prompt. The controller may carry and transmit this state, but it must not write, complete, or correct the Architect's business packet.
 
 If the fresh Architect cannot directly inspect peer task state, the controller may attach one content-neutral liveness attestation bound to the exact target and authority-snapshot revision. Limit it to the target role and thread reference, observed `IDLE` or `INACTIVE` state, no queued action, observation time, expiry or invalidation condition, and direct-observation source. It proves only that the target was ready to receive transport; it cannot select the owner, task, gate, authorization, completion layer, or packet content. Missing, stale, mismatched, or conflicting evidence requires `BLOCKED: PEER_LIVENESS_UNVERIFIED`; do not explore transport protocols or draft a partial packet. Immediately before a mechanical relay, recheck the target and refuse the relay without editing the packet if the attestation has become invalid. Treat a future direct peer-state bridge as a different transport cohort, not as an equivalent implementation of this attestation.
@@ -81,12 +98,14 @@ The new thread must:
 1. validate the role, project, revision, and freshness marker;
 2. sample the smallest current workspace or runtime fact needed to reject stale state;
 3. state the current gate, next safe action, and one forbidden assumption;
-4. perform the first correct advancing action in the first turn where those checks are complete and no required fact or external wait remains;
-5. return a continuity acknowledgement.
+4. when Goal continuity is required, verify the staged Goal revision and paused lifecycle without treating it as business authority;
+5. after the freeze sequence grants authority and activates the Goal, first consume and adjudicate any existing Worker completion before dispatching new work;
+6. perform the first correct advancing action in the first turn where those checks are complete and no required fact or external wait remains;
+7. return a continuity acknowledgement.
 
 Call that response the `first actionable turn`. When its action is owner dispatch, it must include a complete bounded `DISPATCH_PACKET`; when one necessary fact is missing, it must return `BLOCKED` and name only that fact. `BLOCKED` is an output protocol, not a liveness state; classify the resulting wait from the missing fact's owner and dependency. Do not manufacture an acknowledgement-only turn, relabel a ready dispatch as open-ended architecture analysis, or defer an already-ready action to a second planning turn. A legitimate Skill read, current-fact check, tool call, or external wait may make a later response the first actionable turn, but once the needed result arrives the role must produce the action rather than restart broad analysis.
 
-The acknowledgement establishes `PROVISIONAL` continuity and permits active traffic to move to the new thread. Keep the prior thread read-only and recoverable; a reversible archive is allowed, but do not destroy its recovery path. Finalize the rotation as `accepted` only after the new role closes its first comparable outcome epoch and no substantive regression is directly linked to the handoff. Until then, do not emit an accepted `rotation_completed` event. If the new thread cannot establish first-turn continuity, or later loses the role/authority contract, routes the wrong owner, misses a required handoff, misstates the completion layer, or leaks internal lifecycle reporting because of the handoff, record `rolled_back`, abort the epoch, and resume the prior or last-good role. Ordinary implementation defects without a direct continuity link do not retroactively fail the rotation.
+The acknowledgement establishes `PROVISIONAL` continuity and permits active traffic to move to the new thread only after every required Goal freeze, activation, and read-back check also succeeds. Keep the prior thread read-only and recoverable; a reversible archive is allowed, but do not destroy its recovery path. Finalize the rotation as `accepted` only after the new role closes its first comparable outcome epoch and no substantive regression is directly linked to the handoff. Until then, do not emit an accepted `rotation_completed` event. If the new thread cannot establish first-turn continuity, loses required Goal state, later loses the role/authority contract, routes the wrong owner, misses a required handoff, duplicates an existing assignment, misstates the completion layer, or leaks internal lifecycle reporting because of the handoff, record `rolled_back`, abort the epoch, and resume the prior or last-good role only through the verified Goal rollback sequence. Ordinary implementation defects without a direct continuity link do not retroactively fail the rotation.
 
 For a declared bounded-output action, a liveness watchdog may interrupt only when all of these observable conditions hold: the facts and required Skill or state reads are complete; no tool call, external result, or evidence return is in flight; the role has produced neither the bounded result nor `BLOCKED` nor a new concrete missing fact; valid output has not begun; and the runtime-specific watchdog has passed. Repeated planning summaries are corroborating evidence only, never the sole trigger, and the Skill does not define one cross-project timeout. Do not apply this rule to open-ended architecture analysis, active tools or waits, or a newly discovered necessary fact. Output that has begun suspends the start watchdog only while it continues making observable progress; if it stops before a complete result and a separate runtime-specific progress watchdog passes under the same no-wait conditions, re-evaluate the stall. If a correctly specified fresh role meets all conditions during `PROVISIONAL` continuity and must be interrupted so the last-good role can resume, classify the failure as handoff-linked working-mode regression, append `rolled_back`, abort the epoch, and do not rescue the sample through repeated coaxing or controller-authored business content.
 
@@ -152,7 +171,7 @@ Epoch-close outcomes are intentionally distinct:
 
 Treat v1 events as immutable historical input: v1 accepts only `completed`, `paused`, and `aborted` plus accepted or rolled-back rotation; every newly appended event uses v2. A mixed v1/v2 ledger remains valid, including a v2 terminal close for an epoch opened under v1, provided all other epoch identity fields remain consistent. Once an epoch contains v2 it cannot downgrade to v1.
 
-Do not add a free-form `note`, message text, path, URL, tool result, diff, or error body. An evidence reference is a bounded opaque identifier such as `SUP-014` or `turn:17`; it is not a narrative field.
+Do not add a free-form `note`, message text, path, URL, tool result, diff, error body, Goal objective, Goal transfer envelope, or raw Goal API output. An evidence reference is a bounded opaque identifier such as `SUP-014` or `turn:17`; it is not a narrative field.
 
 Use exactly three decision metrics, calculated separately for comparable `role + cohort + model + reasoning` groups:
 
@@ -240,6 +259,6 @@ Treat the writer-ownership topology, App Server lifecycle policy, and Desktop-pa
 
 Proceed only after the real pilot passes. Add one small trusted hook implementation with generation de-duplication. Verify one manual and one automatic compaction on a non-critical thread before enabling it for the Architect, then the Supervisor. Disable it immediately on duplicate injection, stale state, sensitive output, or context pollution.
 
-Only after the compact-hook pilot passes may a light controller start a fresh thread, send the bounded bootstrap, wait for a continuity acknowledgement, and archive the old thread. It must fall back to the old thread on failure.
+Only after the compact-hook pilot passes may a light controller start a fresh thread, send the bounded bootstrap, wait for a continuity acknowledgement, and archive the old thread. When Goal continuity is required, it must also stage and verify the successor Goal while paused, freeze and verify the incumbent Goal and continuation queue, transfer authority while both are paused, activate and verify the successor, and use the ordered Goal rollback on failure. It must never invent Goal content or budget scope, treat a prompt as Goal state, or archive the old thread before the first clean outcome closes.
 
 Do not add a database, dashboard, memory MCP, transcript index, fork-based pseudo-reset, or global orchestration ledger. If the local JSONL and bounded state are insufficient, stop and reassess the design rather than scaling the instrumentation first.
