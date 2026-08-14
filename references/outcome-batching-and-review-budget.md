@@ -15,6 +15,8 @@ Apply the removal test:
 
 > If removing one work item would not change whether the shared acceptance passes, exclude that item from the batch.
 
+When several admissible batches or lane choices exist, prefer the bounded choice that closes the smallest dependency chain while reducing the largest current uncertainty. Near a user-visible milestone, prefer a bounded vertical outcome across the necessary components over horizontal polishing, while still preserving one external outcome and one shared acceptance boundary.
+
 At batch opening, draw the smallest dependency, write-hotspot, and exclusive-resource graph needed to decide readiness. Rescan it after every Worker completion handshake, at batch close or the next batch opening, and when an active item enters an exclusive-resource wait. The rescan is mandatory, but it records only candidates actually found and never requires filling a lane quota. Keep active concurrency and evidence freshness as two independent obligations:
 
 - treat different write hotspots as necessary but insufficient for independence: qualifying items must also share no unresolved contract, ordered acceptance, exclusive fixture or resource, and must be independently verifiable;

@@ -1,310 +1,119 @@
 ---
 name: agent-orchestration-liveness
-description: Coordinate long-running or multi-agent work with architect, worker, and independent read-only supervisor roles, including liveness, bounded context lifecycle, outcome batching, risk-triggered technical review, truthful completion layers, low-noise user reporting, and long-lived browser, desktop, or device sessions. Use when persistent role threads need safe handoff, compaction, fresh-thread rotation, or low-cost context-efficiency measurement. Do not use for ordinary short single-owner tasks, ordinary technical code review, project-specific product planning, or direct machine operation.
+description: Coordinate long-running or multi-agent work that needs Architect/Worker/Supervisor separation, bounded ownership, liveness checks, truthful completion, low-noise reporting, safe handoff, context rotation, context-cost experiments, or long-lived browser, desktop, and device sessions. Do not use for short single-owner tasks, routine code review, project-specific product planning, or direct machine operation.
 ---
 
-# Agent Orchestration Liveness and Independent Supervision
+# Agent Orchestration Liveness
 
-## Preserve the three-role contract
+## 保持角色与权威分离
 
-Keep these authorities separate:
+- **Architect** 是唯一业务权威：拥有目标、业务门、优先级、owner、派工、验证与复审预算、产品与架构裁决、集成和验收。Architect 只可为一个已声明的阻塞假设或原子集成动作临时直接执行；出现 first stable failure、范围扩张或 Worker 可接手时立即退出。
+- **Worker** 只拥有一个 bounded assignment 与其 write hotspot；在授权范围内自主执行，遇到 first stable failure 即停止并返回当前事实，不扩大范围，不夸大完成层。
+- **Supervisor** 是独立只读审计角色：检查 goal alignment、liveness、ownership、冲突、truthful completion 与浪费；不派工、不审批、不实现、不操作机器，也不成为第二 Architect 或常驻 technical reviewer。
+- **Controller** 若存在，只管理有界状态、liveness、transport 或内容无关指标；不选择业务任务、owner 或验证预算，不创作或修补业务 packet，不代收审批，不冒充用户。机械 transport 只能逐字传递 Architect 已完成的内容。
 
-- **Architect**: own the current goal, business gate, priorities, task ownership, product and architecture decisions, verification and review budget, integration, and acceptance. At every new gate or outcome batch, map the smallest dependency, write-hotspot, and exclusive-resource graph before dispatch. Dispatch bounded work and acknowledge its result. Enter direct execution only for one declared blocking hypothesis or one atomic integration action; state the minimal scope, stop condition, and handoff target, then exit when the blocker clears, the first stable failure appears, the scope must expand, or a worker can take over. Do not become the routine implementation worker or starve acknowledgements, dispatch, or integration decisions.
-- **Worker**: own one bounded assignment and its declared hotspot. Execute autonomously inside that scope, stop at the first stable failure, and report current facts. Do not silently widen the assignment or claim a higher completion layer than the evidence supports.
-- **Supervisor**: independently audit goal alignment, liveness, ownership, conflicts, truthful claims, and avoidable waste. Stay read-only. Do not assign workers, choose implementation details, operate machines, edit artifacts, or become a second architect. When a technical reviewer already covers the current candidate, verify review coverage, integration, freshness, and completion-layer truth instead of repeating routine code review.
+把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。低风险、可逆、局部可测的变更不建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
 
-Keep ordinary commit-level code review, test review, and defect adjudication in a separate technical-review workflow. Treat independent technical review as a risk-triggered responsibility, not a permanent fourth role or a default gate for every candidate. The reviewer must be independent of the primary implementer, but may be another available worker; do not create a standing heartbeat, Worktree, or approval role for the function. If the supervisor happens to notice a material safety, funds, data-integrity, or current-gate defect, record it and route it to the appropriate reviewer instead of expanding into a continuing code review.
+## 维护最小当前事实
 
-## Establish the current operating contract
+维护一张有界 state card，至少记录：当前 objective/gate 与 acceptance boundary、outcome batch、active owner 与 hotspot、独占 operator、每项 assignment 的 next observable checkpoint、真实外部 wait、最高已证 completion layer、OPEN findings、最近 material delta、下一安全动作，以及是否真的需要用户。
 
-Record only the live facts needed to supervise the workflow:
+State card 只是索引，不是不可质疑的事实源。作出 material direction、completion、conflict、risk 或 handoff 判断前，只抽样一个最小直接当前事实；不要重扫仓库、重跑已通过测试或重建证明链。旧 revision、PID、订单、线程状态与错误码默认都是历史，除非当前工作重新使其相关。
 
-- architect and supervisor thread IDs;
-- active worker thread IDs and bounded assignments;
-- outcome-batch ID, externally verifiable outcome, and shared pass/fail acceptance boundary;
-- current business gate and its acceptance condition;
-- active owner and write hotspot for each assignment;
-- next observable checkpoint for each active assignment;
-- explicit external waits, deadlines, and user dependencies;
-- sole physical-machine or device operator, if exclusivity applies;
-- last meaningful state change and timestamp;
-- open supervisor findings and their response deadlines.
+用稳定的完整 role/thread identity 路由；标题和 transport metadata 不能代替身份。把 delivery failure 与业务任务状态分开报告。
 
-Route by full thread ID. Treat host or transport identifiers as transport metadata, not agent identity. Report delivery failures separately from task state.
+## 组织 bounded work 与安全并发
 
-Use the current state card as an index, not as unquestionable truth. For a material direction, completion, conflict, or risk judgment, sample the smallest direct current fact needed to check the claim: a fresh worker handoff, one relevant file or diff, one current task state, or one current runtime fact. Do not rescan the repository, replay completed tests, or rebuild a proof chain.
+每个 Worker assignment 至少包含：assignment 与 gate、当前已证事实或首个未知、一个可外部核验 outcome、owner/hotspot、明确 exclusions、最小充分 acceptance、first-stable-failure 停止条件、semantic verification budget、next checkpoint 和 completion packet 要求。
 
-Treat old orders, process IDs, revisions, thread states, and failure codes as historical until the current workflow makes them relevant again.
+一个 outcome batch 只对应一个 externally verifiable outcome 与一个共享 pass/fail boundary。普通返修、technical review 和内部 owner handoff 留在同一 batch，除非外部 outcome 或 acceptance boundary 发生 material delta。
 
-## Bound long-lived context and measure rotation cost
+Architect 在新 gate、batch 开闭、Worker completion handshake 和独占资源 wait 后重扫 ready lanes：
 
-Treat native compaction as a context safety valve, not as the authority for workflow continuity. Keep one bounded Architect authority snapshot and one smaller Supervisor overlay that references the Architect revision. Reuse an established branch, Worktree, or owner when appropriate, but do not reuse unbounded chat history merely because those engineering resources persist.
+- 对当前目标相关、已授权、可独立闭合、热点与独占资源不冲突、不会互相使证据失效的 lane，默认并发派到项目安全上限。
+- 并发数是上限，不是配额；不得为凑数拆碎原子 outcome、创建无关 Worktree、Reviewer、Supervisor 或调查。
+- 少于两个合格 lane 时，记录一个具体的依赖、共享契约、hotspot、独占资源、权威事实或故障扩散原因；单写 SERIAL 或 NONE 不充分。
+- 保持 one writer per hotspot 与 one executable owner per exclusive resource。一个局部 blocker 只冻结依赖它的动作，其他安全且相关工作继续。
 
-Rotate a long-lived role thread only at a safe handoff boundary plus a real pressure signal, unless continuity is already untrustworthy. Immediately before starting the fresh thread, recheck every named Architect, Worker, reviewer, and exclusive operator for queued or resumed work; a prior stop or completion acknowledgement can race with a pending assignment and does not by itself prove the boundary is still safe. Start a fresh thread with the bounded role state and current assignment; do not fork the full history to claim a context reset. The new thread must verify the smallest current facts before accepting the state packet.
+已 PASS 的 evidence 在同一精确 candidate 与覆盖范围未变化时复用。只有 covered candidate 变化、修复失败项、相关环境或证据失效，或晋级更高 completion layer 需要 representative real-surface evidence 时才重跑。减少重复不等于跳过资金、身份、授权、幂等、生产、安全或首次完成声明所需的验证。
 
-Keep an Architect bootstrap bounded to the role and authority contract, freshness marker, current gate and completion layer, current owner and hotspot, one next action, applicable authorization and stop boundaries, and only the facts needed for that action. Refer to the bounded authority snapshot instead of reprinting its full acceptance matrix, old adjudications, or historical state. The first turn in which continuity checks are complete and no required fact or external wait remains is the `first actionable turn`; it must also perform the first correct advancing action before returning. After consuming any existing completion and before its first dispatch, require the successor to rescan current ready lanes instead of inheriting the incumbent's prior `SERIAL` choice. For an owner-dispatch action, return the complete bounded `DISPATCH_PACKET`; if one necessary fact is missing, return `BLOCKED` with that fact. `BLOCKED` is an output protocol, not a liveness state; classify the resulting wait by the owner and nature of the missing fact. Do not split a ready action into an acknowledgement turn followed by open-ended re-planning, relabel a ready dispatch as open-ended analysis, or let the controller author or complete business content.
+## 判断 liveness 并闭合结果
 
-When the runtime exposes a persisted Architect Goal, treat it as a separate thread-scoped continuation contract, not as another spelling of the bounded objective, gate, or next action. A fresh successor does not inherit that Goal from project instructions, the authority snapshot, or its bootstrap. Require Goal continuity only when the incumbent already has a Goal or the user or project declares a persistent Goal mandatory; do not force Goal mode onto ordinary one-off tasks. The Architect or user owns the exact objective, completion and stop conditions, lifecycle, and budget scope. The controller may carry one incumbent-signed, exact, one-time transfer envelope, but it must not author, summarize, truncate, or correct the Goal. Never put the exact Goal, its transfer envelope, or raw Goal API output in metrics. Keep the exact objective out of the bounded authority state; store only an opaque Goal revision, lifecycle status, transfer state, budget scope, and ephemeral envelope reference.
+每个受监督对象只取一个 liveness 状态：
 
-For a required Goal-aware transfer, stage the successor's exact Goal as paused and verify it through a supported Goal read surface before granting authority. At the final boundary, verify no turn, automatic continuation, completion packet, or other action is in flight or queued; pause and re-read the incumbent Goal; confirm again that no continuation is queued; then transfer authority, activate the successor Goal, and re-read it. This is a fail-closed freeze sequence, not a transaction: a short interval with both Goals paused is safer than any interval with two active Goals. If activation or verification fails before a successor business action, first pause and verify the successor, then return authority to the incumbent, then resume and verify the incumbent. If any state remains ambiguous, keep both Goals paused, prohibit business action, and return `BLOCKED: PERSISTENT_GOAL_STATE_UNVERIFIED`. Never use an ordinary prompt as evidence that persisted Goal state exists. If the supported runtime cannot set and read the required Goal, retain the incumbent rather than completing the handoff.
+- **ACTIVE_WORK**：具名 owner 正在推进当前 gate 或其声明依赖，并有 next observable checkpoint。
+- **BOUNDED_WAIT**：具名的非用户操作、观察或依赖仍在声明边界内。
+- **USER_WAIT**：确实需要身份澄清、登录或验证码、桌面解锁、UAC、物理输入、新凭据或权限、真实资金或生产授权。
+- **STALLED**：gate 未完成，存在安全且相关的下一动作，却没有 owner 执行或确认。
+- **COMPLETED**：声明的 gate 与全部 required handoff 均已闭合。
 
-Treat Goal budget scope as signed policy, not as an inferred cross-thread counter. Preserve no budget as no budget. Use the unused remainder only when the transfer envelope explicitly defines one cross-thread total cap; treat that remainder as the successor's new safety cap, not inherited usage accounting. Use a per-thread amount only when that scope is explicit. An existing budget whose scope is undeclared keeps the successor paused and blocks transfer. Preserve a paused Goal as paused, and never reactivate a terminal or budget-limited Goal without a new Architect or user decision. Goal continuity supplements rather than replaces the Worker completion handshake, direct role channels, existing-owner reconciliation, first correct advancing action, and first clean outcome required for final rotation acceptance.
+Activity 不等于进展。编译修复、必要测试、migration、依赖恢复和集成可保持 ACTIVE_WORK，但必须说明正在减少的依赖或未知与下一边界。授权内、可逆、本地的 owned action 不是 USER_WAIT；evidence required 不等于 approval required。
 
-When direct peer-state inspection is unavailable, the controller may attach one fresh, target-bound, content-neutral liveness attestation to the authority snapshot. It may state only the target role and thread reference, observed `IDLE` or `INACTIVE` state, absence of a queued action, observation and expiry or invalidation boundary, bound authority-snapshot revision, and direct-observation source. It proves transport readiness only: it must not choose an owner, task, gate, authorization, completion layer, or business packet content. The fresh Architect may rely on it only for that runtime fact; a missing, stale, mismatched, or conflicting attestation requires only `BLOCKED: PEER_LIVENESS_UNVERIFIED`, not transport-protocol exploration or a partial packet. Recheck the target immediately before a mechanical relay, invalidate the attestation if state changed, and never edit the Architect's packet to fit the new state. This attestation does not create a direct bridge or alter a frozen manual-transport cohort.
+Worker 完成时返回一个压缩 packet：assignment/outcome batch、当前 gate 与 acceptance boundary、结果与状态变化、最高已证层、first stable failure、owned runtime/config/resource/pending 的安全状态、唯一允许下一动作、是否需要用户及稳定原因、technical-review disposition。Architect 必须确认后只做三选一：关闭 assignment/gate、派发下一 bounded action 与 owner，或声明真实的 bounded/user wait。工具结束本身不构成闭环；BLOCKED 只是输出协议，实际 liveness 仍按缺失事实的 owner 与性质分类。
 
-Before `thread/start`, directly re-read and preserve the incumbent role's actual model, reasoning, service tier, approval policy and reviewer, network policy, and other declared cohort invariants. For a Git-backed role whose authorization ledger permits ordinary local or Git atomic actions, resolve the selected Worktree's absolute Git directory and necessary Git common directory, then provision the smallest effective role-turn policy that writes the ordinary workspace and only those validated Git metadata roots. Legacy `workspace-write` keeps `.git` and resolved Git directories protected read-only, so adding them as writable roots is not a correction; use a named least-privilege permission profile or a platform-equivalent policy proven by the role turn, never `danger-full-access`. Before treating the epoch as eligible, verify the first persisted or runtime `turn_context`, or equivalent effective policy, against the selected profile and every cohort invariant. Recheck that effective policy after a client, connection, host, resume, compact, or runtime transition that can change it and before the first action needing the protected capability; a first-turn match cannot prove later resumed turns. A `thread/start` response, controller-side command, or control-plane probe alone is insufficient. On any mismatch, abandon the fresh epoch without retrofit, retain the last-good role, and correct the profile at a safe boundary. A correction may restore the least-privilege surface already declared by the owning Architect and authorization ledger; a defective profile being narrower does not require a new business packet. Verbatim relay authorizes no client, host, sandbox, permission set, or execution channel beyond that declaration. A different surface requires a new Architect packet and must still satisfy every least-privilege and safety prohibition; without it, stop and return that missing fact to the Architect without rerouting or declaring `USER_WAIT`. Probe every corrected or new capability surface content-free. If a measured epoch is open, close it `aborted` before the change, then start a fresh blank, pre-armed epoch in a new comparable cohort; retain earlier epochs only as immutable historical evidence.
+Completion packet 已可读但 delivery 状态不明时，视为结果已经收到，只标记缺失的 Architect ACK；不得重跑测试、订单或机器动作来验证 transport。
 
-The orchestration controller is never an approval reviewer. It must not click an approval UI, use GUI or Computer Use to approve, forward or transform an approval into consent, impersonate the user, or auto-approve on the user's behalf. A named action already covered by the authorization ledger must be completed autonomously by its owning role; a sandbox denial caused by an underspecified fresh-thread capability profile is a controller correction, not `USER_WAIT`. If such a required positive action requests approval, observe without acting, abandon the defective fresh epoch, and correct the capability surface at a safe boundary. An intentionally out-of-scope negative probe may pass by producing an untouched approval request; end that disposable probe without responding and verify that the write did not occur. Do not record a context regression merely for the controller's profile defect; record one only when the role itself forgets or violates the authorization boundary. Report only a genuine identity ambiguity, UAC, desktop unlock, login or verification step, required physical input, production or real-funds boundary, new credential or permission, or action outside the ledger as a user gate.
+发现漏接 completion 或 Architect 在安全下一动作存在时 idle，只唤醒一次并指出缺失决定；不代替派工，不快速轮询，不在一个 heartbeat interval 内重复同一纠偏。
 
-Treat a correct first-turn continuity acknowledgement as a provisional authority transfer, not as proof that the new role will preserve its operating contract. Keep the prior role read-only and recoverable until the new role closes its first comparable outcome epoch without a handoff-linked substantive regression. Only then finalize the rotation as accepted and retire the prior role. If the new role loses its role or authority boundary, routes the wrong owner, fails to consume a required handoff, misstates a completion layer, or leaks internal lifecycle reporting because of the handoff, roll the rotation back and abort the epoch. Do not attribute an ordinary implementation defect to rotation without a direct continuity link.
+## 如实声明完成层并压缩用户汇报
 
-Treat a declared bounded-output turn as stalled only when its required facts and Skill or state reads are complete, no tool call or external result is in flight, no result, `BLOCKED`, or new concrete missing fact has appeared, and the runtime-specific watchdog has passed. Repeated planning summaries may corroborate the stall but cannot be its sole evidence. Do not interrupt open-ended architecture analysis, an active tool or external wait, a newly identified necessary fact, or valid bounded output while it is making observable progress. If output starts but stops before a complete result and a separate runtime-specific progress watchdog passes under the same no-wait conditions, re-evaluate it as stalled. If a correctly specified fresh role reaches this state during provisional continuity and controller interruption is required to restore the last-good role, record a handoff-linked substantive regression, roll back, and abort the epoch; do not coax the failed thread or fill in its packet.
+只声明最高已证层：
 
-Measure context changes as a small experiment, not as a new governance system. Keep the metrics log outside the repository with user-only permissions. Never record prompts, responses, tool output, diffs, credentials, personal data, or free-form notes. Separate Architect and Supervisor cohorts, compare equivalent work and model routes, and use exactly three decision metrics:
+- **engineering complete**：bounded implementation/repair 与直接检查通过；
+- **integration complete**：受影响组件通过声明的集成路径；
+- **user-capability complete**：目标用户可见或真实环境 outcome 在 acceptance conditions 下被观察。
 
-- median input tokens per completed turn, with cached input retained only as diagnostic context;
-- observed substantive context regressions, classified as `constraint_miss` or `duplicate_work`;
-- cold-start turns from a fresh role thread to its first correct advancing action.
+低层证据不得暗示高层完成。Mock、simulator、unit test、process start 或 API response 不能自动证明真实设备、真实资金、真实用户流或完整业务结果。**TECH_CLEAR** 只覆盖声明的 scope、candidate 与 layer；依赖 browser、desktop、device 或 remote session 的高层声明，必须先有 representative real-surface evidence。
 
-Daily token totals may help diagnose load, but must not decide whether a context policy passes. The live state card remains the workflow authority; the append-only metrics file is only an experiment record.
+Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返修、review、ACK、commit 与 re-dispatch 默认留在内部。仅在 objective/gate、material risk、真实 USER_WAIT/RED、用户声明的报告边界，或已证明的 user-visible completion 发生变化时更新用户；GREEN heartbeat 静默。同一事实不重复播报。
 
-Before changing compaction, handoff, fresh-thread rotation, role-state schemas, context-cost instrumentation, or the related stop and rollback gates, read [Context Lifecycle and Runtime Metrics](references/context-lifecycle-and-runtime-metrics.md) completely. Begin with its local Phase 0 recorder validation. Before the first measured epoch in a cohort, freeze a content-neutral work envelope and prospective enrollment rule; the Architect alone selects and routes business work, while the controller enrolls the chronologically next normally routed matching epoch and may not choose, delay, substitute, or omit work to obtain a sample. Immediately before `thread/start`, require the incumbent Architect to name that next outcome and its content-neutral envelope classification in the bounded authority snapshot. Create and pre-arm the measured fresh thread only when the declaration deterministically matches the frozen rule; if it is outside the envelope or indeterminate, leave business routing unchanged and do not measure it. The controller must not infer the classification or ask for a different outcome. Treat the envelope as a cohort invariant and never retrofit it after an epoch begins. Do not hand-estimate token usage, and do not enable hooks, thread automation, a collector, database, or dashboard until real App Server turn-usage capture is verified and the manual pilot has enough comparable samples without a substantive continuity regression.
+降噪不能压掉内部 truth：blocker、data anomaly、safety risk 和 inability to continue 必须立即到 Architect；一旦形成真实用户门、RED、material expectation change 或 decision need，再由 Architect 及时报告用户。
 
-When Codex Desktop's isolated stdio App Server connection cannot be observed directly, use the reference's armed rollout bridge only for a blank non-ephemeral thread created through a controlled App Server connection. Arm it before the first turn, keep the exact model and reasoning route fixed for the epoch, and reject any existing unarmed rollout. The same controlled App Server instance must remain the sole persistence writer from `thread/start` until the measured epoch closes or rolls back. Keep it alive across every turn, and do not load, read, wait on, follow, or send to the tested role through Codex Desktop or another App Server; even read-only inspection may acquire the writer or change the effective policy. Observe the role only through the owning connection and the pre-armed content-free rollout or metrics path.
+## 运行独立监督
 
-At a terminal epoch boundary, first collect terminal usage without an epoch outcome; then ask the same owning connection to `thread/unsubscribe`, stop it gracefully, and verify that no live holder remains before another client resumes the thread. Only after that release proof may collection append `completed` or `not_achieved`, and the Desktop bridge requires the explicit `--writer-release-proven` close guard for either outcome. Only `completed` contributes a sample or can support an accepted rotation. `not_achieved` records a safely closed epoch whose declared outcome did not pass; terminate that measured rotation attempt as `inconclusive`, exclude it from the three decision metrics, and require a new fresh, blank, pre-armed thread and boundary for the next measured attempt. Treat `unsubscribed`, UI `IDLE`, a closed view, an empty lock file, or a product inactivity TTL as insufficient release proof by itself. If ownership is lost or a foreign writer appears, stop delivery, never steal the lock, and use one bounded recovery window only to prove safe release. If release or same-owner provenance cannot be restored within that window, collection may close the measured epoch as `aborted` and record the provisional rollback, but no client may resume or retry that thread until release is independently proven. Retain the last-good role without recording a role context regression for the controller transport defect; never append `completed` or `not_achieved` before cleanup can still fail. A change to the writer-ownership policy, App Server lifecycle policy, or Desktop-participation policy is a new transport surface and starts a new comparable cohort after a content-free probe. This bridge is never a historical transcript importer.
+Heartbeat review 只在用户、项目或当前目标声明的 cadence/next boundary 运行；未声明 cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。相关工作健康时保持静默。只有 externally verifiable outcome、acceptance、authority/risk、completion layer、exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 等 material event 才创建 fresh、read-only、short-lived Supervisor review。其 bootstrap 只含 latest Architect authority snapshot、Supervisor overlay 与相关 OPEN findings；结果返回后结束线程，只把 disposition 与 finding transition 留在 overlay。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
 
-## Issue bounded worker assignments
+每个 actionable finding 使用稳定 ID，并保持 OPEN，直到一个当前事实把它变为 CLOSED 或 SUPERSEDED；复发创建新 finding。Architect disposition 只能是 ACCEPTED、PARTIALLY_ACCEPTED 或 REJECTED_WITH_EVIDENCE，它不是 finding state。Gate 关闭时不得让 OPEN finding 静默消失。
 
-Give each worker one compact work order containing:
+Supervisor 只提供 advisory：
 
-1. assignment ID and current business gate;
-2. current verified fact or first unresolved failure;
-3. one outcome that reduces the gate;
-4. allowed hotspot and ownership boundary;
-5. explicit exclusions and unsafe actions;
-6. smallest sufficient acceptance check;
-7. first-stable-failure stop-and-report condition; any later same-hotspot repair requires an explicit Architect re-dispatch after the completion handshake and preserves one writer;
-8. a semantic `verification_budget` separating directly affected checks, stable-candidate checks, and promotion or representative real-surface checks, with evidence invalidation conditions;
-9. required completion packet.
+- **GREEN**：目标一致、owner 清楚、声明真实或等待合理；保持静默。
+- **YELLOW**：首次漏接、方向偏差、无理由停滞、ownership/truthfulness 或 communication concern；通知 Architect 并设 response boundary，不自动暂停工程。
+- **RED**：同一 YELLOW 跨两个 review boundary 未解决、独占资源发生双控制，或新动作威胁生产、凭据、资金、数据完整性或不可恢复状态；只暂停受影响动作，其他安全工作继续。
 
-Prefer the smallest task that closes a dependency or reduces the largest current uncertainty. When approaching a user-visible milestone, prioritize a bounded vertical assignment that completes one end-to-end user outcome over additional isolated capability slices, unless a declared dependency or material risk must be resolved first. Treat active concurrency and evidence freshness as separate Architect duties. Rescan current ready lanes after every Worker completion handshake, at every outcome-batch open or close, and when work enters an exclusive-resource wait; this is a hard trigger, not a required multirow form, review gate, or user update. Treat assignments as independent only when they have separate facts and write hotspots, no unresolved shared contract, ordered acceptance, or exclusive fixture or resource, and can be verified independently. When at least two safe, relevant, ready assignments qualify, dispatch them concurrently by default; fill only the project-declared safe capacity with work that passes the outcome removal test. Numerical lane or Worktree counts are project-specific caps, never quotas. Do not create a Worktree, technical review, Supervisor, investigation, or acceptance lane merely to fill capacity. Use idle capacity during a long `BOUNDED_WAIT` only for a different ready hotspot, never to duplicate the same test, runtime action, or atomic outcome; an independently closable result belongs to its own batch. Keep one compact internal decision such as `READY_LANE_DECISION: candidate_count=<n>; independent_ready=<n>; action=<CONCURRENT_DISPATCH|SERIAL>; reason=<fact|NONE>`; do not put it in experiment metrics or require Supervisor approval. When fewer than two assignments qualify, name the concrete dependency, hotspot conflict, exclusive resource, unstable authority fact, or failure-blast-radius reason instead of saying only that work is sequential; reusing one Worktree is not itself a serialization reason. Preserve one writer per hotspot and one executable owner for an exclusive physical machine, device, account, or other non-concurrent resource; that exclusivity blocks only candidates needing the same resource. Do not split one atomic outcome merely to manufacture concurrency.
+维护一张 compact supervision card：gate/acceptance、liveness、highest layer、last material progress、owners/hotspots/operator、wait/deadline、最小 evidence、communication audit、OPEN findings、至多一个最高杠杆纠偏、next safe action、user-required fact 和 severity。问题解除后立即清除旧 warning。
 
-Reuse a passing check or review while it remains bound to the same candidate and its covered scope has not changed. Before repeating evidence collection, require one concrete invalidation fact: a covered candidate delta, repair of a failed check, relevant evidence or environment expiry, source conflict, or promotion to a higher completion layer that needs representative real-surface evidence. Do not rerun merely for a handoff, message acknowledgement, ordinary commit, same-batch repair outside the covered scope, or reviewer change. A verification budget is a semantic boundary, not a fixed time, token, or universal run-count quota: never use evidence reuse to omit the first check required for funds, identity, authorization, idempotency, production, safety, or a truthful completion-layer claim.
+## 安全管理 context、handoff 与 rotation
 
-Define one outcome batch by one externally verifiable outcome and one shared acceptance boundary. Multiple workers, hotspots, or dependency chains may participate only when they are required to pass that boundary. Keep ordinary repairs, technical reviews, and internal owner handoffs inside the batch; they may be re-dispatched internally but do not automatically create a new review, integration claim, or user-reporting boundary.
+Native compaction 只是 context safety valve，不是 workflow authority。保持一份有界 Architect authority snapshot 与更小的 Supervisor overlay；复用有效工程 ownership，不复用 unbounded chat history。
 
-Before creating, merging, splitting, pausing, or closing an outcome batch; deciding whether a lifecycle event merits a new review; mapping a technical review to a completion layer; entering a bounded architect execution mode; or reconciling findings at gate closure, read [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md) completely.
+正常 rotation 必须同时满足 safe handoff boundary 与真实 pressure signal，除非 continuity 已不可信。Fresh start 前即时复核 queued/resumed work、现有 completion、owner、reviewer 与独占动作。使用 fresh thread + bounded bootstrap；禁止 full-history fork 伪装重置。
 
-Before deciding whether independent technical review is required, preparing its handoff, issuing or consuming `TECH_CLEAR` or `TECH_BLOCKED`, or deciding whether a prior result is stale, read [Risk-Triggered Technical Review](references/technical-review-workflow.md) completely. Use Worker self-check plus Architect spot-check for low-risk, reversible, locally testable changes. Require independent review only when a protected semantic invariant is affected and the expected late-failure cost justifies the review, handoff, duplicate-evidence, and critical-path wait costs.
+Successor 先核验最小当前事实。其 continuity check 完成且无必要事实或外部 wait 后的第一个响应就是 **first actionable turn**，必须同时执行首个正确推进动作；需要派工时给完整 DISPATCH_PACKET，缺必要事实时返回一个精确 BLOCKED。消费既有 completion 后、首次 dispatch 前重新扫描 ready lanes，不继承 incumbent 的旧 SERIAL 判断。
 
-Do not add a Worktree, release artifact, hash chain, repeated preflight, approval step, or user reply phrase unless the actual assignment requires it. Do not ask the user to foreground a window, click an ordinary control, or repeat a fixed confirmation when available automation can perform the action safely.
+Persisted Goal 若存在，是独立的 thread-scoped continuation contract，不会从 project、prompt、authority snapshot 或 bootstrap 自动继承。Goal 的 exact objective、stop/completion conditions 与 budget scope 只由用户或 Architect 定义；Controller 不概括或创作。任何 Goal-aware handoff 都必须用受支持的 set/read lifecycle，在 authority 切换时保持单一权威、禁止双 active，并在状态不明时 fail closed、保留 incumbent。Goal continuity 不替代 direct role channels、Worker completion handshake、existing-owner reconciliation、first advancing action 或 first clean outcome。
 
-## Classify liveness and relevance
+保持 incumbent 的实际 route 与 effective least-privilege capability。Filesystem capability 不扩大业务 authorization。Controller 永远不是 approval reviewer，不点击、relay、转换或代用户批准；授权账本内普通动作应由 owning role 自主闭环。Fresh capability/profile mismatch 是 controller/setup defect，不是 USER_WAIT；approval 留下 untouched，并在安全边界纠正。只有真实红门才找用户。
 
-Assign exactly one liveness state:
+Continuity ACK 只建立 PROVISIONAL transfer。Prior role 保持 read-only、recoverable，直到 successor 关闭首个 clean comparable outcome 且无直接 handoff-linked regression；此后才接受 rotation。Capability/transport defect 不等于 role regression；普通实现缺陷也不得追溯成 handoff regression。
 
-- `ACTIVE_WORK`: A named owner is executing a task that advances the current gate or removes a declared dependency, with a next observable checkpoint.
-- `BOUNDED_WAIT`: A named non-user operation, observation, or dependency is still inside its declared boundary.
-- `USER_WAIT`: Progress truly requires unresolved identity, login or verification, desktop unlock, UAC, physical input, new credentials or permissions, funds, or production authority.
-- `STALLED`: The gate is incomplete, a safe relevant next action exists, and no owner is executing or acknowledging it.
-- `COMPLETED`: The declared gate and all required handoffs are closed.
+不得把 active tool、external wait、新发现的必要事实、open-ended architecture analysis 或仍有有效输出的 bounded turn 判为 stall。只有 required reads 完成、无工具或外部结果在途、无结果/BLOCKED/新事实且 runtime watchdog 已过，才可触发恢复。
 
-Activity alone is not progress. Mark work as a `YELLOW` direction risk when it is active but superseded, unrelated to the current gate, duplicative, in conflict with another owner, or unable to identify which current dependency or unknown risk it reduces.
+Context experiment 永远不是业务治理系统：metrics 必须 repository-external、content-free、append-only 且 non-authoritative；实验不得选择、拆分、延迟、替换业务任务，也不得改变业务 route、安全规则、模型或完成层。
 
-Do not require a user-visible feature every heartbeat. Compilation repair, necessary tests, migrations, dependency recovery, and integration work can remain `ACTIVE_WORK` when they are bounded and directly serve the current gate. Label them as engineering progress rather than user-visible progress.
+## 按触发条件完整读取 references
 
-Do not classify these as stalled:
+当下列触发条件成立时，先完整读取对应 reference，再规划或执行；读取失败时返回精确 BLOCKED，不凭常识重建协议：
 
-- a worker is executing a relevant bounded task;
-- an observer is inside an explicit evidence window;
-- the user intentionally paused the workflow;
-- the next action is unsafe or requires real user authority;
-- another owner already controls the same hotspot or exclusive resource.
+- 在规划、执行或修改 compaction、bounded state、fresh handoff/rotation、persisted Goal、runtime transport、permission/capability correction、context measurement、cohort 或 rollback 前，读取 [Context Lifecycle and Runtime Metrics](references/context-lifecycle-and-runtime-metrics.md)。
+- 在 opening/changing/pausing/splitting/closing outcome batch、ready-lane dispatch/re-dispatch、选择 concurrency/serialization、定义或复用 verification budget、执行 checkpoint-driven LIVENESS_RECHECK、进入 bounded Architect execution、判断 material Supervisor event 或 gate-close finding reconciliation 前，读取 [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md)。
+- 当 candidate 可能影响 protected semantic invariant，或准备、签发、消费、增量复核、判 stale 的 TECH_CLEAR/TECH_BLOCKED 前，读取 [Risk-Triggered Technical Review](references/technical-review-workflow.md)。普通低风险 NOT_REQUIRED 判断不要求重复加载。
+- 在给 browser、desktop、device、account 或 remote session 分配 executable owner、启动 helper/keepalive、首个 executable thin slice 形成后准备扩展第二条依赖分支、执行首个 representative real-surface probe、判断 interactive USER_WAIT，或 pause/fail/cleanup runtime 前，读取 [Interactive Runtime Lifecycle](references/interactive-runtime-lifecycle.md)。
+- 在长期 workflow 首次建立 intermediate user reporting、改变 reporting boundary、从内部 lifecycle 组成 cadence/milestone update、审计 communication health 或发 communication YELLOW 前，读取 [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md)。
+- 在打开 material event review、创建或回应 actionable Supervisor finding、改变 finding state 或 gate-close reconciliation 前，读取 [Architect-Supervisor Exchange Templates](references/review-exchange-templates.md) 并使用相应 bounded form。普通健康 heartbeat 不加载完整模板。
 
-Do not classify owned, reversible development operations as `USER_WAIT`. Evidence required is not approval required.
+## 拒绝反模式并干净停止
 
-Before declaring `USER_WAIT`, inspect available authorization context, reversibility, current owner capability, and whether the action truly needs a new identity, login, verification, credential, permission, physical input, funds, or production authority. Do not require every project to create a new authorization ledger. If an avoidable interactive-runtime interruption currently requires a user action, record the immediate `USER_WAIT` separately from the orchestration `YELLOW` that explains the preventable interruption.
+拒绝以下行为：把 busy/commit/test/thread count 当业务进展；用 state card 代替当前事实；无 checkpoint 的无限 ACTIVE_WORK；Supervisor 变成第二 Architect 或 routine reviewer；为每个 candidate 强制 review；重复测试、订单、真实动作或证明链；用低层结果宣称高层完成；无必要的 approval、report、hash、manifest、签名或固定回复；局部 blocker 冻结无关安全工作；快速轮询和 mid-task micromanagement。
 
-## Separate completion layers
-
-State completion at the highest layer actually proven:
-
-- **engineering complete**: the bounded implementation or repair and its direct checks passed;
-- **integration complete**: the affected components completed their declared integrated path;
-- **user-capability complete**: the intended user-visible or real-environment outcome was observed under its acceptance conditions.
-
-Never use a lower layer to imply a higher one. A mock, simulator, unit test, process start, or API response is not automatically a real device, real funds, real user flow, or full business result.
-
-A technical-review `TECH_CLEAR` proves only the reviewed layer. When a higher completion claim depends on a browser, desktop, device, remote session, or other runtime surface, run a representative real-surface probe at the first executable thin slice and before scaling a second full branch or dependent implementation on that surface. Until observed, cap the completion layer at engineering or local integration as supported by the evidence.
-
-A required technical review blocks only promotion or shared integration of the affected risk scope. Keep unrelated and non-dependent work moving. `TECH_CLEAR` applies only to the declared review scope, candidate boundary, and proven engineering layer; it never proves integration, real-surface, or user-capability completion.
-
-For any long-lived browser, desktop, device, remote-session, or interactive automation task; the first executable surface probe; runtime keepalive or interruption handling; a possible interactive `USER_WAIT`; or runtime cleanup, read [Interactive Runtime Lifecycle](references/interactive-runtime-lifecycle.md) completely.
-
-## Audit direction and closed-loop throughput
-
-At each review, answer:
-
-1. Does every active assignment map to the current gate or a declared dependency?
-2. Is each hotspot owned by exactly one writer, with exclusive resources controlled by one operator?
-3. Did the workflow close tasks, change the gate, or reduce a named unknown risk since the prior boundary?
-4. Are engineering progress and user-capability progress described honestly?
-5. Are any tasks duplicated, superseded, conflicting, or serialized without need?
-6. Did a completed worker result receive an architect decision and a next step?
-7. Is there one material waste or one corrective direction worth raising?
-
-Judge closed-loop throughput over the task's declared boundary or multiple heartbeat intervals, not by commit count or constant visible activity. Long-running `ACTIVE_WORK` must still identify the dependency or uncertainty being reduced and its next observable boundary. Repeated “investigating,” “preparing,” or “validating” without task exits, gate movement, or risk reduction is a stall candidate.
-
-Do not invent waste or a correction to fill a report field. Record them only when they materially affect progress, and raise one highest-leverage correction rather than a list of optional improvements.
-
-## Require the completion handshake
-
-Require each worker to finish with one compact packet:
-
-- assignment ID, outcome-batch ID, current gate, and shared acceptance boundary;
-- result and changed state;
-- highest completion layer proven;
-- first stable failure, if any;
-- safe state of owned processes, configuration, resources, and pending work;
-- one allowed next action;
-- whether the user is required and the stable reason.
-- technical-review disposition (`NOT_REQUIRED` or `REQUIRED`); when required, include the protected invariant, reason, and one bounded review scope.
-
-Require the architect to acknowledge the packet and do exactly one of these:
-
-- close the assignment or gate;
-- assign the next bounded action and owner;
-- state a legitimate bounded or user wait.
-
-A worker tool call ending without this handoff is not an orchestration close. If a completion packet is readable but transport delivery is ambiguous, treat the result as received and flag only the missing architect acknowledgement. Never duplicate work, tests, orders, or machine actions merely to test messaging.
-
-Keep a same-batch repair packet inside the existing lifecycle. A repair completion may require a new owner or technical review, but it does not by itself create a new batch, event review, integration announcement, or user update.
-
-## Separate internal orchestration from user reporting
-
-Keep worker-to-architect communication fast and truthful, but do not mirror internal lifecycle events into the user conversation. Worker progress, failures, completion packets, architect acknowledgements, review cycles, repairs, and re-dispatch remain internal unless they cross a user-reporting boundary.
-
-Make the architect the communication compression layer:
-
-- update the user when the objective or gate changes, a material risk changes, a real `USER_WAIT` or `RED` appears, the user's requested reporting boundary arrives, or an already-declared user-visible completion boundary is proven;
-- maintain only `last_user_update_at` and `last_user_visible_change` as lightweight reporting state; do not require a pending-message queue;
-- escalate blockers, data anomalies, safety risks, and inability to continue to the architect without delay, even while normal user-facing progress is being batched.
-
-Let the supervisor audit lifecycle leakage, repeated user updates without a user-visible delta, and material changes left unreported. A communication `YELLOW` corrects future reporting only; it does not approve wording, pause engineering, or let the supervisor define new user-visible completion boundaries.
-
-When auditing communication health, sample the architect's user-facing updates since the previous communication-review boundary. A current state card or single latest snapshot cannot prove that lifecycle leakage did not occur. If the interval history is unavailable, mark the communication audit `NOT_RUN` and do not claim that reporting is clear.
-
-Include one compact internal `communication_audit` record in every interval supervision card. Use exactly one status:
-
-- `NO_NEW_UPDATES`: actually query the user-facing interval and confirm it contains no new architect updates; record `window` and `source`.
-- `CHECKED`: actually read the interval; record `window`, `source`, `delta` (`none`, `objective`, `risk`, `decision`, or `completion`), and `result` (`CLEAR` or `YELLOW`).
-- `NOT_RUN`: interval history is unavailable, the read failed, or only a latest snapshot is visible; record the stable reason and make no communication-health claim.
-
-The field is mandatory even when liveness is `GREEN`, but the expanded template is not. Keep `NO_NEW_UPDATES` and `CHECKED/CLEAR` internal and silent to the user. A current state card, one latest message, or an architect self-report cannot support `NO_NEW_UPDATES` or `CHECKED/CLEAR`.
-
-Before establishing or auditing user-facing reporting for a long-running workflow, read [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md) completely. Let the active user request, project contract, or current objective declare any exact cadence or completion boundary; do not impose a universal interval.
-
-## Track supervisor findings to closure
-
-Give every actionable supervisor finding a stable ID such as `SUP-001` and record:
-
-- the current gate or claim it affects;
-- the smallest supporting fact;
-- severity and concrete consequence;
-- the required architect response boundary;
-- finding state (`OPEN`, `CLOSED`, or `SUPERSEDED`), architect disposition, next-check boundary, and any terminal fact.
-
-Require the architect to respond with one of:
-
-- `ACCEPTED`: accept the finding and state the owner or next action;
-- `PARTIALLY_ACCEPTED`: state the accepted portion and evidence-backed boundary;
-- `REJECTED_WITH_EVIDENCE`: provide the minimal current fact that invalidates it.
-
-Treat disposition as the architect's response, not as finding state. Keep `architect_ack`, `blocker`, and `next_check_boundary` as metadata. Carry `OPEN` findings across heartbeats until one current fact closes them or a replacement fact supersedes them. Transition only `OPEN → CLOSED` with one closing fact or `OPEN → SUPERSEDED` with one replacement fact or successor finding; both terminal states remain closed. A recurrence creates a new finding that references the old one.
-
-When a business gate closes, reconcile every related finding as `CLOSED`, `SUPERSEDED`, or still `OPEN`. An `OPEN` finding must retain its blocker, next-check boundary, and whether it blocks the claimed completion layer. It may remain open and non-blocking, but it must not disappear silently.
-
-## Use an explicit architect-supervisor exchange
-
-Keep one minimum communication contract so that a critical review and its acknowledgement do not disappear inside free-form status prose:
-
-- an event review request states the current objective or gate, why review now, changed facts, responsible owner or key dependency, highest proven completion layer, known gap or accepted limitation, and the assessment requested;
-- an actionable supervisor finding has a stable ID, level, issue, minimal evidence, minimal correction, and follow-up boundary;
-- the architect response records disposition, fact basis, action or evidence-backed reason for no action, and the next gate or follow-up boundary.
-
-Before composing, responding to, updating, or closing an event review or supervisor finding, read [Architect-Supervisor Exchange Templates](references/review-exchange-templates.md) completely and use the applicable template. Do not apply the full templates to ordinary heartbeats, commits, tests, or routine progress updates.
-
-Supervisor output is advisory: the supervisor identifies risk, conditions, and direction mismatch but has no general approval authority. A `YELLOW` does not automatically pause work. Only an independent safety or policy boundary, or a `RED` risk, pauses the affected action; unrelated safe work continues. The architect may accept a non-prohibited risk when the fact basis and follow-up boundary are explicit.
-
-## Use heartbeat and event-driven reviews
-
-Use both review modes:
-
-- **Heartbeat review**: monitor long-running work at the cadence declared by the user or project. If none is declared, choose a cadence that matches the task's expected progress boundary instead of imposing a universal interval.
-- **Event-driven review**: open a new review boundary only when there is a material delta in the externally verifiable outcome, shared acceptance boundary, risk or authority boundary, claimed completion layer, exclusive-resource conflict, or an open finding reaching its declared next-check boundary. An independent safety or policy check may also require a review.
-
-For each qualifying material event-driven Supervisor review, use a fresh, read-only, short-lived Supervisor thread scoped to that event. Bootstrap it from the latest Architect authority snapshot, the bounded Supervisor overlay, and only the `OPEN` findings relevant to the review. End the thread after it emits its review result; capture the Architect disposition and finding transition in the stable overlay and finding lifecycle without keeping the review thread alive. Heartbeats and ordinary commits, tests, same-batch repairs, technical-review results, owner handoffs, or integration preparation do not create review threads. A same-batch repair triggers a fresh scoped re-review only when it reaches an `OPEN` finding's declared next-check boundary and provides new evidence for closure or reassessment. `TECH_REVIEW` remains a separate workflow.
-
-At a heartbeat, read the latest state card and recent handoffs once, compare them with the previous boundary, and remain silent when work is relevant and healthy. Do not poll rapidly or micromanage a running worker. At an event review, inspect only facts needed for that transition.
-
-Material delta does not replace liveness detection. If a next observable checkpoint passes without a fresh execution fact while a safe relevant action exists, keep the same outcome batch and perform a liveness recheck; mark `YELLOW/STALLED` when appropriate. Ordinary commits, tests, same-batch repairs, technical-review `TECH_CLEAR`, owner handoffs, or integration preparation are not new event-review boundaries by themselves.
-
-## Detect and recover stalls
-
-Use these recovery steps:
-
-1. Recognize meaningful progress only when a gate fact, completed dependency, verified repair, ownership state, bounded wait, or named uncertainty changes.
-2. If a worker finished without architect acknowledgement, send one wake-up containing the completion packet and required decision.
-3. If the architect is idle while a safe relevant action exists, send one wake-up naming the current gate and the missing decision; do not assign the worker on the architect's behalf.
-4. If active work is off-goal, send one correction naming the mismatched gate and the result that must be restored; do not prescribe the code solution.
-5. Do not repeat the same wake-up more than once per heartbeat interval.
-
-Use severity sparingly:
-
-- `GREEN`: Goal-aligned work or a legitimate bounded wait; owners are clear, claims match evidence, and no material conflict exists. Stay silent unless a report was requested.
-- `YELLOW`: First missed handoff, first direction mismatch, first full interval without meaningful progress while a safe action exists, or one material ownership or truthfulness concern. Wake the architect and set a response boundary.
-- `RED`: The same unresolved `YELLOW` persists across two review boundaries, two control threads contend for one exclusive resource, or a new action risks production, credentials, funds, data integrity, or unrecoverable state. Pause only the affected new action and request a decision.
-
-Clear a warning immediately when a current fact, acknowledged assignment, legitimate wait, corrected direction, or completed gate resolves it. Do not preserve obsolete warnings.
-
-## Report compactly
-
-Keep one internal supervision card with:
-
-- current gate and acceptance condition;
-- liveness state and highest completion layer;
-- last meaningful progress and time;
-- active owners, hotspots, and exclusive operator;
-- explicit wait and deadline;
-- duplicate, conflict, or direction mismatch;
-- smallest sampled evidence;
-- communication audit: `NO_NEW_UPDATES`, `CHECKED` with `CLEAR/YELLOW`, or `NOT_RUN`, with the required evidence fields;
-- open supervisor findings and response boundary;
-- material waste and one correction, only if present;
-- next safe action;
-- whether the user is required and why;
-- `GREEN`, `YELLOW`, or `RED`.
-
-Notify the architect for `YELLOW` or `RED`. Notify the user only at the boundaries defined above: an objective or gate change, a material risk change, a real `USER_WAIT` or `RED`, an explicitly requested report, or a declared user-visible completion boundary. Do not turn `GREEN` heartbeats or routine worker activity into user-facing chatter.
-
-## Reject orchestration anti-patterns
-
-Reject these patterns:
-
-- treating busy workers, commits, tests, or thread count as business progress;
-- treating a state card as proof without the smallest necessary current check;
-- allowing indefinite `ACTIVE_WORK` without a risk, dependency, or next boundary;
-- allowing the supervisor to become a second architect, dispatcher, release gatekeeper, or routine code reviewer;
-- requiring independent technical review for every candidate, commit, or low-risk reversible change;
-- making a reviewer rerun all Worker evidence or block unrelated safe work;
-- presenting engineering completion as integration or user-capability completion;
-- duplicating tasks or real-world actions to prove a handoff;
-- adding unnecessary approvals, reports, hashes, manifests, signatures, fixed reply phrases, or repeated validations;
-- rapid polling and mid-task micromanagement when a worker has a bounded expected boundary;
-- freezing unrelated safe work because one external dependency is blocked;
-- keeping monitoring alive after its target workflow is complete or paused.
-
-## Stop monitoring cleanly
-
-Disable the heartbeat when the declared workflow completes, the user pauses it, or no long-running target set remains. Return the final gate, completion layer, and any unacknowledged handoff or open finding. Do not leave a recurring monitor running without an active target.
+当 workflow 完成、用户暂停，或没有长期 target 时停止 heartbeat/monitor。返回最终 gate、最高 completion layer、任何未确认 handoff 与 OPEN finding；不要留下无目标的 recurring monitor。

@@ -100,8 +100,11 @@ The new thread must:
 3. state the current gate, next safe action, and one forbidden assumption;
 4. when Goal continuity is required, verify the staged Goal revision and paused lifecycle without treating it as business authority;
 5. after the freeze sequence grants authority and activates the Goal, first consume and adjudicate any existing Worker completion before dispatching new work;
-6. perform the first correct advancing action in the first turn where those checks are complete and no required fact or external wait remains;
-7. return a continuity acknowledgement.
+6. after consuming any existing completion and before the first dispatch, rescan current ready lanes instead of inheriting the incumbent's prior SERIAL decision;
+7. perform the first correct advancing action in the first turn where those checks are complete and no required fact or external wait remains;
+8. return a continuity acknowledgement.
+
+Goal continuity does not replace direct role channels, the Worker completion handshake, existing-owner reconciliation, the first correct advancing action, or the first clean outcome required for accepted rotation.
 
 Call that response the `first actionable turn`. When its action is owner dispatch, it must include a complete bounded `DISPATCH_PACKET`; when one necessary fact is missing, it must return `BLOCKED` and name only that fact. `BLOCKED` is an output protocol, not a liveness state; classify the resulting wait from the missing fact's owner and dependency. Do not manufacture an acknowledgement-only turn, relabel a ready dispatch as open-ended architecture analysis, or defer an already-ready action to a second planning turn. A legitimate Skill read, current-fact check, tool call, or external wait may make a later response the first actionable turn, but once the needed result arrives the role must produce the action rather than restart broad analysis.
 
