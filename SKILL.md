@@ -79,7 +79,7 @@ Heartbeat 与 liveness-only review 只在用户、项目或当前目标声明的
 
 只有存在明确的跨 review-boundary 监督义务时，才维护一个 gate-scoped、read-only Supervisor，例如 OPEN finding、已声明的 recurring heartbeat/checkpoint、completion ACK 后续检查或 finding follow-up。预计耗时长、GUI/remote 或独占资源本身只提高风险，不单独触发持续 Supervisor。同一 gate 最多一个；其 epoch 只覆盖一个 gate、outcome batch 或 related finding cluster，并只持有不超过 2 KiB 的 Supervisor overlay：reviewed Architect revision、稳定 finding IDs/states、last gate-relevant progress、last review boundary 与 next supervision boundary。每次复核仍抽样最小当前事实，不复制完整 gate、业务计划、日志或 transcript。
 
-当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 时，执行 material event review；已有 gate-scoped Supervisor 时复用它，不创建第二个，也不在 finding 与其紧邻复审之间轮换。没有跨边界持续义务的离散 event review 才使用 fresh、read-only、short-lived Supervisor，结果返回后结束线程。Gate close、暂停、真实 USER_WAIT、确无安全下一动作或监督价值结束时，先 reconcile findings，再结束 gate-scoped Supervisor；context pressure 下只在安全边界用 bounded overlay 做 Supervisor-to-Supervisor handoff。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
+当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 时，执行 material event review；已有 gate-scoped Supervisor 时复用它，不创建第二个，也不在 finding 与其紧邻复审之间轮换。没有跨边界持续义务的离散 event review 才使用 fresh、read-only、short-lived Supervisor，结果返回后结束线程。Gate close、暂停、真实 USER_WAIT、确无安全下一动作或监督价值结束时，先 reconcile findings，再结束 gate-scoped Supervisor。只有用户或当前业务权威明确决定迁移，或直接证据表明 Supervisor 的 role、project、revision、finding 或 communication continuity 已不可信且一次有界原地修复失败时，才在安全边界用 bounded overlay 做 Supervisor-to-Supervisor handoff。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
 
 每个 actionable finding 使用稳定 ID，并保持 OPEN，直到一个当前事实把它变为 CLOSED 或 SUPERSEDED；复发创建新 finding。Architect disposition 只能是 ACCEPTED、PARTIALLY_ACCEPTED 或 REJECTED_WITH_EVIDENCE，它不是 finding state。Gate 关闭时不得让 OPEN finding 静默消失。
 
@@ -91,11 +91,11 @@ Supervisor 只提供 advisory：
 
 维护一张 compact supervision card：gate/acceptance、liveness、highest layer、last material progress、owners/hotspots/operator、wait/deadline、最小 evidence、communication audit、OPEN findings、至多一个最高杠杆纠偏、next safe action、user-required fact 和 severity。问题解除后立即清除旧 warning。
 
-## 安全管理 context、handoff 与 rotation
+## 安全管理 context 与按需 handoff
 
 Native compaction 只是 context safety valve，不是 workflow authority。保持一份有界 Architect authority snapshot 与更小的 Supervisor overlay；复用有效工程 ownership，不复用 unbounded chat history。
 
-正常 rotation 必须同时满足 safe handoff boundary 与真实 pressure signal，除非 continuity 已不可信。Fresh start 前即时复核 queued/resumed work、现有 completion、owner、reviewer 与独占动作。使用 fresh thread + bounded bootstrap；禁止 full-history fork 伪装重置。
+项目原生、长寿命 Architect 配合 native compaction 与 bounded state 是默认模式。Elapsed time、turn count、context 占比、high-context、目标变化或一次及多次成功 compaction 只能触发 freshness、质量、延迟与成本复核，均不得单独触发 handoff。只有用户或当前业务权威明确决定生命周期迁移，或直接证据表明 authority、Goal、project、route、capability、transport 或 working-mode continuity 已不可信且无法原地有界修复时，才启动 fresh handoff。Fresh start 前即时复核 queued/resumed work、现有 completion、owner、reviewer 与独占动作。使用 fresh thread + bounded bootstrap；禁止 full-history fork 伪装重置。
 
 Successor 先核验最小当前事实。其 continuity check 完成且无必要事实或外部 wait 后的第一个响应就是 **first actionable turn**，必须同时执行首个正确推进动作；需要派工时给完整 DISPATCH_PACKET，缺必要事实时返回一个精确 BLOCKED。消费既有 completion 后、首次 dispatch 前重新扫描 ready lanes，不继承 incumbent 的旧 SERIAL 判断。
 
@@ -107,7 +107,7 @@ Continuity ACK 只建立 PROVISIONAL transfer。Prior role 保持 read-only、re
 
 不得把 active tool、external wait、新发现的必要事实、open-ended architecture analysis 或仍有有效输出的 bounded turn 判为 stall。只有 required reads 完成、无工具或外部结果在途、无结果/BLOCKED/新事实且 runtime watchdog 已过，才可触发恢复。
 
-Context experiment 永远不是业务治理系统：metrics 必须 repository-external、content-free、append-only 且 non-authoritative；实验不得选择、拆分、延迟、替换业务任务，也不得改变业务 route、安全规则、模型或完成层。
+Context experiment 永远不是业务治理系统：metrics 必须 repository-external、content-free、append-only 且 non-authoritative；实验不得选择、拆分、延迟、替换业务任务，也不得改变业务 route、安全规则、模型或完成层。Rotation、compact hook 与 handoff automation 只可作为用户明确授权、非关键且有成本上限的研究，不是默认路线；普通业务不得为了采样或机制建设进入控制台 transport。
 
 ## 按触发条件完整读取 references
 

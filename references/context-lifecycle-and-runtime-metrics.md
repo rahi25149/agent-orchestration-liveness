@@ -5,7 +5,7 @@ Read this reference before changing compaction, handoff, fresh-thread rotation, 
 ## Contents
 
 1. [Keep one authority and one overlay](#keep-one-authority-and-one-overlay)
-2. [Rotate at a safe boundary](#rotate-at-a-safe-boundary)
+2. [Use long-lived context and hand off at a safe boundary](#use-long-lived-context-and-hand-off-at-a-safe-boundary)
 3. [Keep compaction responsibilities narrow](#keep-compaction-responsibilities-narrow)
 4. [Record only decision-grade metrics](#record-only-decision-grade-metrics)
 5. [Review a baseline-versus-pilot experiment](#review-a-baseline-versus-pilot-experiment)
@@ -37,13 +37,11 @@ Never store credentials, cookies, personal data, prompts, replies, transcripts, 
 
 A persisted Goal is a separate thread-scoped continuation contract. Do not copy its exact objective into the 3 KiB Architect state or metrics ledger, where it could be truncated, duplicated, or become a competing source of truth. Keep the exact incumbent-signed objective and its completion and stop conditions only in the incumbent Goal, one exact one-time transfer envelope, and the successor Goal after staging. The controller may transmit that envelope mechanically and hold only its opaque reference while the handoff is open; it must clear that reference when the handoff closes and must not summarize, edit, infer, or retain the envelope as experiment history.
 
-## Rotate at a safe boundary
+## Use long-lived context and hand off at a safe boundary
 
-Normal rotation requires both:
+The default is one project-native, long-lived Architect using native compaction plus bounded current state. Do not start a handoff solely because of elapsed time, turn count, context percentage, a high-context observation, a material objective change, or one or more successful compactions. Those facts may trigger a bounded review of freshness, quality, latency, and cost; they are not handoff authorization.
 
-```text
-safe handoff boundary AND at least one pressure signal
-```
+A handoff may begin only when the user or current business authority explicitly chooses a lifecycle migration, or when direct evidence shows that authority, Goal, project, route, capability, transport, or working-mode continuity is untrustworthy and cannot be repaired in place through one bounded correction. Repeated rereading, re-derivation, constraint loss, owner mistakes, or duplicate work are evidence only when directly observed; context size or compaction count is not a proxy for them.
 
 A safe boundary means:
 
@@ -57,15 +55,7 @@ A safe boundary means:
 
 A stop response, idle snapshot, or completion acknowledgement is not durable proof of this boundary. A previously queued assignment or automatic continuation may start after that observation. If any new execution fact appears before the fresh thread starts, invalidate the boundary, preserve the resulting state, and begin a new boundary check instead of treating the new epoch as comparable.
 
-Pressure signals include:
-
-- a successful compaction followed by a safe batch boundary;
-- a reliably observed high-context condition;
-- a material change in objective or acceptance boundary;
-- repeated rereading or re-derivation of facts already frozen;
-- a concrete constraint miss, owner mistake, or duplicate work after compaction.
-
-Hard rotation does not wait for a normal boundary when continuity is already untrustworthy, such as after two compactions in one role epoch, repeated loss of a protected constraint, invalid role state, or a major authority change. Preserve the safe state of any in-flight exclusive operation before rotating.
+When continuity is already untrustworthy, freeze new business effects and preserve the safe state of every in-flight exclusive operation before recovery. Do not treat two compactions, a large context, or a major objective change as proof that continuity is untrustworthy; require the actual authority, constraint, owner, duplication, Goal, project, capability, transport, or working-mode failure.
 
 Create a fresh thread with the role contract, bounded role state, current assignment, and only the necessary recent handoff. Do not use a full-history fork as a context reset. Reuse the existing branch, Worktree, and owner when that remains correct.
 
@@ -112,13 +102,13 @@ The acknowledgement establishes `PROVISIONAL` continuity and permits active traf
 
 For a declared bounded-output action, a liveness watchdog may interrupt only when all of these observable conditions hold: the facts and required Skill or state reads are complete; no tool call, external result, or evidence return is in flight; the role has produced neither the bounded result nor `BLOCKED` nor a new concrete missing fact; valid output has not begun; and the runtime-specific watchdog has passed. Repeated planning summaries are corroborating evidence only, never the sole trigger, and the Skill does not define one cross-project timeout. Do not apply this rule to open-ended architecture analysis, active tools or waits, or a newly discovered necessary fact. Output that has begun suspends the start watchdog only while it continues making observable progress; if it stops before a complete result and a separate runtime-specific progress watchdog passes under the same no-wait conditions, re-evaluate the stall. If a correctly specified fresh role meets all conditions during `PROVISIONAL` continuity and must be interrupted so the last-good role can resume, classify the failure as handoff-linked working-mode regression, append `rolled_back`, abort the epoch, and do not rescue the sample through repeated coaxing or controller-authored business content.
 
-Use a more conservative epoch for the Architect: one coherent outcome batch or a tightly related group of batches. Use a lighter Supervisor epoch: one gate, one outcome batch, or one related finding cluster. Keep that Supervisor epoch across review turns only when an explicit cross-boundary obligation exists, such as an open finding, declared recurring heartbeat or checkpoint, completion-ack follow-up, or finding follow-up boundary; elapsed duration, GUI or remote work, and exclusive-resource use alone are insufficient. Reuse it for a material review inside the same gate, and do not rotate it between a finding and its immediate re-review when the communication interval or finding history is still required. For an isolated event with no continuing obligation, use a fresh short-lived Supervisor. At gate close, pause, real user wait, loss of every safe next action, or end of supervision value, reconcile findings and end the Supervisor epoch. If context pressure requires replacement before then, transfer only the bounded overlay at a safe boundary and verify its Architect revision and finding states before the successor reviews anything.
+Use a more conservative epoch for the Architect: one coherent outcome batch or a tightly related group of batches. Use a lighter Supervisor epoch: one gate, one outcome batch, or one related finding cluster. Keep that Supervisor epoch across review turns only when an explicit cross-boundary obligation exists, such as an open finding, declared recurring heartbeat or checkpoint, completion-ack follow-up, or finding follow-up boundary; elapsed duration, GUI or remote work, and exclusive-resource use alone are insufficient. Reuse it for a material review inside the same gate, and do not rotate it between a finding and its immediate re-review when the communication interval or finding history is still required. For an isolated event with no continuing obligation, use a fresh short-lived Supervisor. At gate close, pause, real user wait, loss of every safe next action, or end of supervision value, reconcile findings and end the Supervisor epoch. Replace it before then only when the user or current business authority explicitly chooses migration, or direct evidence shows that the Supervisor's role, project, revision, finding, or communication continuity is untrustworthy and one bounded in-place correction has failed. At that safe boundary, transfer only the bounded overlay and verify its Architect revision and finding states before the successor reviews anything.
 
 ## Keep compaction responsibilities narrow
 
-Do not override the native compact prompt during the initial experiment.
+Use native compaction by default. Do not add hooks merely to postpone or trigger handoff, and do not override the native compact prompt during an opt-in experiment.
 
-If hooks are piloted later, give them only these responsibilities:
+If explicit, non-critical, cost-bounded hook research is authorized after native compaction shows a concrete deficiency, give hooks only these responsibilities:
 
 - **PreCompact**: validate the current role-state schema, size, role, project, and revision; atomically preserve one `last-good` copy.
 - **PostCompact**: increment one compact generation and record the trigger and state revision. Do not summarize or inject context.
@@ -190,6 +180,8 @@ An App Server adapter must buffer `thread/tokenUsage/updated` notifications and 
 
 ## Review a baseline-versus-pilot experiment
 
+This section is a dormant research protocol, not the default Architect lifecycle or product roadmap. Use it only after new, explicit user authorization for a non-critical cohort with a declared business-cost limit and direct evidence that the long-lived native-compaction mode may be inadequate. Historical ledgers remain immutable; do not resume an old cohort or relabel an inconclusive experiment because model context capacity changed.
+
 Phase 0 does not judge token improvement. It proves only that the local recorder is atomic, strict, de-duplicated, owner-only, correctly grouped, and free of content-bearing data. Do not fill real logs with hand-estimated token values.
 
 After the App Server adapter is verified, the manual pilot compares at least three baseline epochs with at least three pilot epochs in the same cohort. Each pilot epoch should begin with a fresh role thread. Its first-turn acknowledgement remains provisional; append exactly one terminal rotation after the measured epoch closes: accepted for a clean comparable outcome, rolled back for a handoff-linked failure, or v2 inconclusive for `not_achieved`. Collect at least five accepted pilot rotations before issuing a pass decision. Paused, aborted, and `not_achieved` epochs do not satisfy this gate.
@@ -240,11 +232,11 @@ This test matrix is the Phase 0 recorder gate. It covers serial and concurrent a
 
 Stop Phase 0 immediately if prohibited content is recorded, a replay is counted twice, role or thread attribution is wrong, malformed data is silently accepted, instrumentation affects normal work, or the metrics log is used as workflow state.
 
-### Phase 1: real usage adapter and manual rotation pilot
+### Phase 1: optional real usage adapter and manual handoff research
 
-Proceed only after Phase 0 passes. Verify an App Server adapter that coalesces token notifications into one terminal `turn_completed` record with a stable event ID. The deterministic matrix must cover usage-before-terminal and terminal-before-usage ordering, repeated usage snapshots, replay across restart, mixed-thread rejection, model-reroute rejection, malformed or incomplete streams, owner-only repository-external storage, and content exclusion. Then run one opt-in real App Server turn and require one final usage record plus one matching `turn/completed` notification. Use an explicitly bounded low-cost smoke route rather than inheriting the operator's global model route, and do not change global Codex configuration.
+Proceed only after Phase 0 passes and the user separately authorizes non-critical research with a cost limit. Verify an App Server adapter that coalesces token notifications into one terminal `turn_completed` record with a stable event ID. The deterministic matrix must cover usage-before-terminal and terminal-before-usage ordering, repeated usage snapshots, replay across restart, mixed-thread rejection, model-reroute rejection, malformed or incomplete streams, owner-only repository-external storage, and content exclusion. Then run one opt-in real App Server turn and require one final usage record plus one matching `turn/completed` notification. Use an explicitly bounded low-cost smoke route rather than inheriting the operator's global model route, and do not change global Codex configuration.
 
-A successful smoke verifies adapter mechanics, not a baseline. Attach the adapter to each role's next fresh App Server connection at a safe handoff boundary; do not retrofit an already-running thread or persist its raw protocol stream. Only epochs closed with `outcome=completed` contribute token samples or completed-epoch counts; open, `not_achieved`, paused, and aborted epochs cannot satisfy the sample gate. Establish the comparable baseline, run manual fresh-thread rotations at safe boundaries, and apply the pilot gates above. Do not automate rotation or compaction.
+A successful smoke verifies adapter mechanics, not a baseline. If the authorized research actually requires a handoff, attach the adapter to the fresh App Server connection at its independently justified safe boundary; never create a business handoff merely to obtain a sample. Do not retrofit an already-running thread or persist its raw protocol stream. Only epochs closed with `outcome=completed` contribute token samples or completed-epoch counts; open, `not_achieved`, paused, and aborted epochs cannot satisfy the sample gate. Apply the pilot gates above only to the newly frozen research cohort. Do not automate handoff or compaction.
 
 Codex Desktop may own an isolated stdio App Server connection that cannot be tapped by an external observer. In that case, create a blank non-ephemeral thread through one controlled App Server connection and arm `scripts/desktop_rollout_usage_adapter.py` after `thread/start` but before the first `turn/start`. The arm operation must confirm that no rollout exists yet. Keep that App Server instance alive as the sole persistence writer for the complete measured epoch, including every later turn. Continue each turn through the same owning connection; do not resume or inspect the tested role through Codex Desktop, a thread read or wait tool, a follower, or a second App Server. A UI or API operation described as read-only may still load the persisted thread, acquire its writer, attach a follower, or change the effective permission profile.
 
@@ -258,10 +250,10 @@ If the owner process or connection exits unexpectedly, ownership provenance beco
 
 Treat the writer-ownership topology, App Server lifecycle policy, and Desktop-participation policy as transport-cohort invariants. A normal fresh App Server instance per epoch under the same declared policy does not create another cohort. A semantic change to any of those policies requires a content-free capability and lifecycle probe and a new comparable cohort; keep earlier epochs as immutable historical evidence and do not pool them with the corrected transport cohort.
 
-### Phase 2: optional compact hooks and light rotator
+### Phase 2: optional compact hooks and safe handoff executor
 
-Proceed only after the real pilot passes. Add one small trusted hook implementation with generation de-duplication. Verify one manual and one automatic compaction on a non-critical thread before enabling it for the Architect, then the Supervisor. Disable it immediately on duplicate injection, stale state, sensitive output, or context pollution.
+Do not proceed by default. Only after separately authorized compaction research shows a concrete need may one small trusted hook implementation be tested with generation de-duplication. Verify one manual and one automatic compaction on a non-critical thread before enabling it for the Architect, then the Supervisor. Disable it immediately on duplicate injection, stale state, sensitive output, or context pollution.
 
-Only after the compact-hook pilot passes may a light controller start a fresh thread, send the bounded bootstrap, wait for a continuity acknowledgement, and archive the old thread. When Goal continuity is required, it must also stage and verify the successor Goal while paused, freeze and verify the incumbent Goal and continuation queue, transfer authority while both are paused, activate and verify the successor, and use the ordered Goal rollback on failure. It must never invent Goal content or budget scope, treat a prompt as Goal state, or archive the old thread before the first clean outcome closes.
+Separately, only after repeated manual handoffs have proven the same recovery path and the user explicitly authorizes automation may a safe handoff executor mechanically carry out a handoff decision already made by the user or current business authority. It does not depend on compact hooks and must never infer a handoff from elapsed time, context size, turn count, compaction, token volume, or its own metrics. It may start a fresh thread, send the bounded bootstrap, wait for a continuity acknowledgement, and archive the old thread only within that explicit decision. When Goal continuity is required, it must also stage and verify the successor Goal while paused, freeze and verify the incumbent Goal and continuation queue, transfer authority while both are paused, activate and verify the successor, and use the ordered Goal rollback on failure. It must never invent Goal content or budget scope, treat a prompt as Goal state, or archive the old thread before the first clean outcome closes.
 
 Do not add a database, dashboard, memory MCP, transcript index, fork-based pseudo-reset, or global orchestration ledger. If the local JSONL and bounded state are insufficient, stop and reassess the design rather than scaling the instrumentation first.
