@@ -2,21 +2,21 @@
 
 这个 Skill 用于协调长期运行的架构师、工程执行者与独立只读监督者工作流，同时明确区分所有权、存活状态、完成层、用户汇报和独立监督。
 
-`SKILL.md`、英文 README 和英文 references 是 Codex 执行时的权威内容。本文件只为中文读者提供概览；如有表述差异，以英文权威文件为准。
+两份 README 都只是简介，不构成第二权威。执行时遵循 `SKILL.md`、实际触发的 references，以及当前用户／项目声明的工作模式；文件语言不决定指令优先级。
 
-## 本次更新内容
+## 正常运行路径
 
 - **结果批次：** 只有服务于同一个外部可验证结果，并共享同一套通过／失败验收边界的工作，才归入同一批次。
-- **审查去重：** 仅在出现实质变化时打开新的事件审查边界；普通返修、测试、技术复裁和内部 owner 交接留在现有批次。
+- **按模式监督：** 项目选择 timer-only 时排他生效，通用事件／检查点不追加审查。GREEN 留在监督自己任务的规定快照，对外静默。
 - **风险触发技术复查：** 只有受保护语义发生变化，且晚发现代价与独立发现价值足以覆盖复查成本时，才启用独立复查；低风险可逆修改继续走自检快车道。
 - **受限复查成本：** 每次只复查一个不变量或直接生产者—消费者路径，复用有效的 Worker 证据，至少做一次面向证伪的独立检查，并允许无依赖工作继续推进。
-- **独立存活检查：** 即使没有实质变化，也使用每个活动任务的下一可观察检查点识别停滞。
+- **有界连续工程：** 在同一假设、授权与 repair budget 内连续调查、实现、必要验证；真实外部副作用首败停止，UNKNOWN 绝不重发。
 - **有界架构师执行：** 只允许架构师直接处理一个已声明的阻塞假设或原子集成动作，并要求停止条件和交接目标。
 - **真实完成层：** 在首次可执行的最小切片上观察真实浏览器、桌面、设备或远程会话后，才声明对应的更高完成层。
 - **监督状态分离：** 分开维护编排存活状态、监督发现状态、架构师处置结论以及阻塞／确认元数据。
 - **低噪音通信审计：** 每个区间保留一条可检查的内部通信审计记录，但不把健康状态机械播报给用户。
-- **有界上下文生命周期：** 可以复用工程 owner、分支和 Worktree，但不无限复用聊天历史；只在安全交接边界与真实压力信号同时成立时轮换线程。
-- **低成本运行指标：** 架构师与监督者分开统计，只比较同类 epoch 的输入 token 中位数、实质上下文回归和冷启动 turn 数，不收集对话正文，也不建设监控平台。
+- **长寿命上下文默认：** native compaction 加有界当前状态；context 大小、经过时间与压缩本身均不授权轮换。必要 Goal 交接仍需受支持的 paused 预置、冻结／读回、单一权威与已核验回退。
+- **休眠研究退出热路径：** metrics、cohort／权限探针、writer 与 hook 研究只有在另获明确授权、非关键且有业务成本上限时读取和运行，普通派工／状态更新不加载。
 
 ## 文件说明
 
@@ -26,7 +26,8 @@
 - `references/interactive-runtime-lifecycle.md`：真实界面最小探针、唯一运行 owner、任务级保活、授权判断、`USER_WAIT` 与安全清理。
 - `references/user-reporting-boundaries.md`：内部事件与用户可见汇报边界，以及通信审计证据。
 - `references/review-exchange-templates.md`：架构师与监督者之间的审查、处置和发现状态模板。
-- `references/context-lifecycle-and-runtime-metrics.md`：有界角色状态、fresh-thread 轮换、压缩 hook 边界、安全 JSONL 指标、复查阈值与回滚门。
+- [Context Lifecycle](references/context-lifecycle-and-runtime-metrics.md)：正常有界角色状态、native compaction、权限／owner 连续性、Goal-aware 安全交接与回退；旧路径保留兼容。
+- [Dormant Context Experiments](references/context-experiments.md)：另行授权的 measured-role 探针、安全 JSONL 指标、研究阈值、hook 和 App Server writer 生命周期。
 - `scripts/context_metrics.py`：只依赖 Python 标准库的严格 JSONL 追加、校验与 baseline／pilot 对比脚本。
 - `scripts/test_context_metrics.py`：schema 安全与决策阈值的确定性测试。
 - `scripts/app_server_usage_adapter.py`：严格合并 App Server 通知；每个已完成 turn 只持久化一条不含正文的用量记录。
@@ -34,63 +35,10 @@
 - `scripts/desktop_rollout_usage_adapter.py`：为无法直接旁路其独立 stdio App Server 连接的 Codex Desktop fresh thread 提供显式预武装桥接。
 - `scripts/test_desktop_rollout_usage_adapter.py`：覆盖预武装、精确路由、重放、压缩代次、隐私和终态边界的确定性测试。
 
-## 上下文指标快速使用
+## 研究可选，不是开工前置
 
-Phase 0 只做人工试点，不改 Codex 全局配置。指标文件必须位于仓库外，脚本会把文件权限收紧为 `0600`：
+研究脚本及其确定性验收矩阵保持不变。仅在显式授权和成本边界内，或为关闭既有 measured operation 所必需的恢复，读取 [Dormant Context Experiments](references/context-experiments.md)。Recorder 测试通过不授权真实 App Server turn、采样、hook、轮换或配置变更；不要从 README 自动进入 Phase 1 或恢复历史 cohort。
 
-```bash
-python3 scripts/context_metrics.py append \
-  --path ~/.codex/orchestration-metrics/events.jsonl \
-  --event epoch_started --epoch-id architect-b01 --mode baseline \
-  --event-id architect-b01-start --thread-ref architect-b01 \
-  --role architect --cohort outcome-batch --model gpt-5.6-luna \
-  --reasoning max --source manual
+普通工作只在首次进入相关模式、reference 内容变更或当前已缺失必要内容时完整读取；已读且仍完整、有效的内容可复用，不每次派工或 state delta 重读。真正必要的当前事实和安全检查不因此省略。
 
-python3 scripts/context_metrics.py validate \
-  --path ~/.codex/orchestration-metrics/events.jsonl
-
-python3 scripts/context_metrics.py report \
-  --path ~/.codex/orchestration-metrics/events.jsonl
-```
-
-日志只允许结构化计数和不透明证据引用，禁止写入 prompt、回复、文件路径、URL、工具输出、diff、凭据或叙述性备注。Phase 0 只验证追加、去重、schema、权限、分组和隐私边界。必须先由已验证的 App Server adapter 提供每个已完成 turn 的最终用量，再收集至少 3 个可比 baseline epoch、3 个 pilot epoch 和 5 次 pilot 轮换，才能把报告用于决策；禁止手工估算 token。实时状态卡仍是工作流权威真源；指标日志不是第二套台账。
-
-完整运行 Phase 0 recorder 准出矩阵：
-
-```bash
-python3 scripts/test_context_metrics.py -v
-```
-
-命名测试覆盖串行与并发持久追加、稳定重放拒绝、畸形或残缺 JSONL 拒绝、内容字段严格排除、仅所有者权限、符号链接拒绝、角色／线程／epoch 分组、合成报告决策，以及小型日志的有界延迟烟测。该矩阵通过只代表本地 recorder 准出，不代表 App Server adapter、真实 token 采集、自动轮换、compact hook 或任何 Codex 配置变更已获准。
-
-## Phase 1 App Server adapter 准出
-
-先运行确定性 adapter 测试：
-
-```bash
-python3 scripts/test_app_server_usage_adapter.py -v
-```
-
-然后显式运行一次有界的真实 App Server turn。烟测默认使用 `gpt-5.4-mini` 与 `low` 推理，避免继承昂贵的全局路由；它不会修改 Codex 配置：
-
-```bash
-RUN_CODEX_APP_SERVER_SMOKE=1 \
-  python3 scripts/test_app_server_usage_adapter.py \
-  LiveAppServerUsageAdapterTest.test_real_terminal_turn_writes_one_safe_usage_record -v
-```
-
-只能把 `AppServerUsageAdapter.consume()` 接到受控 App Server 连接的“服务端到客户端”方向。独立 adapter 命令从 stdin 接收已存在的实时 JSONL tap，但它不是双向 App Server 代理。禁止把原始协议流写入磁盘。epoch 必须提供精确的角色、cohort、model 和 reasoning 路由；一旦发生模型改路由、混入多个 thread、缺少终态通知或缺少最终 usage，adapter 会失败闭合并要求新建或修正 epoch。
-
-Codex Desktop 当前持有隔离的 stdio App Server 连接，外部 sidecar 不能订阅已经运行的连接。角色必须留在 Desktop 时，可以使用 `desktop_rollout_usage_adapter.py`，但必须在创建空白非临时 thread 之后、首个 turn 开始之前执行 `arm`。已有 rollout 文件的 thread 会被拒绝，因此它不能用于回补历史数据。`collect` 可以在安全检查点重复执行且保持幂等；只有角色 epoch 真实闭合且没有活动 turn 时，才附加 `--outcome completed`。脚本不会把原始 thread ID、turn ID、rollout 路径或任何正文写入指标，只保存终态 token 计数和压缩代次；模型／推理路由变化、格式漂移、畸形记录或活动 turn 关闭都会失败闭合。
-
-运行 Desktop bridge 确定性矩阵：
-
-```bash
-python3 scripts/test_desktop_rollout_usage_adapter.py -v
-```
-
-该 bridge 只是在 fresh Desktop 连接无法安全旁路时的兼容路径，不授权读取历史 thread 来补造 baseline；能够安全获得 App Server 服务端到客户端通知时，仍优先使用正式 adapter。
-
-真实烟测通过只证明 adapter 机制成立。架构师与监督者应在各自下一次安全交接边界开始可比 baseline epoch，保持原生 compaction 与轮换行为不变，先收集至少 3 个 baseline epoch，再开始人工 fresh-thread pilot。报告只把以 `outcome=completed` 关闭的 epoch 纳入 token 样本；open、paused 和 aborted epoch 仍留在日志中，但不能满足样本门。不得给已运行中的 thread 反向补记用量，不得手工估算 token，也不得启用 hook 或自动轮换。
-
-这些规则保持项目无关。具体项目的模型路由、业务门、凭据、机器、端口和汇报节奏，应继续放在项目自己的说明或实时状态卡中。
+具体模型／推理路由、业务门、机器、凭据、端口和 cadence 仍由项目指令或有界当前状态声明。

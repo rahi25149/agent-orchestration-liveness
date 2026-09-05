@@ -52,7 +52,7 @@ The following usually remain internal when they do not change the objective, ris
 - a healthy `GREEN` heartbeat;
 - repeated statements that the same gate is still in progress.
 
-These facts still belong in worker handoffs and the state card. Batching user communication must never suppress internal truth.
+These facts still belong in worker handoffs and the state card. Batching user communication must never suppress internal truth. GREEN silence concerns outbound messages, not the Supervisor's own prescribed heartbeat snapshot: retain that local output on every scheduled run. Follow the project-selected supervision mode; communication audits do not add event reviews, polling or a second cadence.
 
 ## Compose one compact user update
 

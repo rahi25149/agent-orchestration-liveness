@@ -2,6 +2,12 @@
 
 Read this reference when a long-running workflow needs a batch-boundary decision, a liveness recheck, bounded architect execution, technical-review handoff, or supervisor-finding reconciliation.
 
+## Apply the selected supervision mode first
+
+The user's/project's current supervision mode gates every Supervisor action, event, checkpoint and table below. In timer-only mode, only the declared timer initiates review: expired checkpoints, completion-ACK deadlines, retry caps, material changes and finding follow-ups are facts for the next scheduled heartbeat, never additional review triggers. The Architect must not send review requests. Owners/executors still obey independent safety hard stops immediately; risk-triggered technical review is a separate workflow, not a Supervisor approval gate.
+
+Temporary `USER_WAIT`, a local transport failure or one blocked lane does not end a recurring obligation that remains useful. GREEN stays in the Supervisor's own prescribed snapshot and is silent externally. Configuration marked ACTIVE is not proof that a scheduled heartbeat executed.
+
 ## Define one outcome batch
 
 Require both:
@@ -27,7 +33,7 @@ At batch opening, draw the smallest dependency, write-hotspot, and exclusive-res
 - if fewer than two items qualify, record the concrete dependency, hotspot conflict, exclusive-resource limit, unstable authority fact, ordered acceptance, shared unresolved contract, shared fixture, or failure-blast-radius reason. Reusing one Worktree or stating that work is currently serial is not enough;
 - do not split a single atomic outcome or create unrelated work merely to increase concurrency.
 
-For every dispatch, declare a semantic `verification_budget` with three layers:
+For every dispatch, declare one semantic `verification_budget` selecting the necessary coverage from three layers; these are conditional categories, not three mandatory test runs for every task:
 
 1. directly affected checks needed during implementation;
 2. stable-candidate checks needed once the candidate boundary is fixed;
@@ -35,7 +41,11 @@ For every dispatch, declare a semantic `verification_budget` with three layers:
 
 Bind passing evidence to its exact candidate, covered scope, environment assumptions, and completion layer. Reuse it until one concrete invalidation fact appears: a covered candidate delta, repair of its failed check, relevant evidence or environment expiry, source conflict, or promotion that requires a new surface. A handoff, acknowledgement, ordinary commit, reviewer change, or same-batch repair outside the covered scope is not itself invalidation. Before repeating a test or review, name the invalidation fact; without one, reuse the evidence.
 
-Place expensive or broad checks at the latest safe stable-candidate boundary. For example, run a relevant production frontend typecheck or build after its stable candidate forms, fold a diff-integrity check into the pre-commit boundary, and run a long formal scenario against a clean commit-bound candidate rather than rerunning only to bind a revision. If that scenario exposes an in-scope defect, stop at the first stable failure. After a named repair changes the covered candidate, rerun only the invalidated scenario and direct dependencies; if the same stable failure recurs or the repair expands scope, the Architect re-scopes from current semantics, never from a universal repair-count limit. These are default budget rules, not permission to omit the first evidence required for funds, identity, authorization, idempotency, production, safety, or a truthful completion-layer claim.
+Place expensive or broad checks at the latest safe stable-candidate boundary. Run relevant typecheck/build once at that boundary, fold diff-integrity into pre-commit, and retain the receiving owner's necessary first-use file check rather than suppressing it as repetition. Run a long formal scenario against the stable candidate, not again merely to bind a revision. After a named repair, rerun only directly invalidated checks and dependencies. A representative smoke proves only its declared coverage: it cannot stand in for a full timed, terminal or business outcome, while a local change does not automatically require that whole chain.
+
+Within one bounded hypothesis, a Worker may investigate, implement and verify continuously inside the project/packet's authorized repair budget. Ordinary deterministic offline source or construction corrections need no terminal completion and re-dispatch for every error, provided scope, contracts, authority, topology and verification budget remain valid. At the first stable failure of a real external-side-effect scenario, stop the affected execution; UNKNOWN permits only readback of the original operation, never a retry. Return to the Architect when same-cause bounded repair fails to converge, there is no new fact, the budget is exhausted, or a new hypothesis/scope is needed. Do not reset budgets, create an infinite repair loop or infer new real attempts from offline correction. These defaults never omit first evidence required for funds, identity, authorization, idempotency, production, safety or a truthful completion-layer claim.
+
+Confirmed unchanged role/authorization/stop facts may be carried by stable reference plus a minimal summary; a new assignment must still provide its necessary owner, permission and boundary facts. Packet templates govern a bounded assignment, not every tool call.
 
 ## Decide whether to keep, split, pause, or close
 
@@ -43,9 +53,9 @@ Place expensive or broad checks at the latest safe stable-candidate boundary. Fo
 | --- | --- | --- |
 | Same external outcome, same acceptance boundary, no material delta | `KEEP` | Continue the existing review lifecycle |
 | Ordinary repair, direct test, technical review, or internal owner handoff | `KEEP` | Do not create a new event review automatically |
-| No material delta, but the next observable checkpoint passed without a fresh execution fact | `KEEP` | Perform `LIVENESS_RECHECK`; use `YELLOW/STALLED` when a safe next action exists |
+| No material delta, but the next observable checkpoint passed without a fresh execution fact | `KEEP` | At the next boundary permitted by the selected mode, perform `LIVENESS_RECHECK`; use `YELLOW/STALLED` when a safe next action exists |
 | Independent externally verifiable outcome or independently closable acceptance | `SPLIT` | Open a separate lifecycle if supervision is needed |
-| New production, permission, authority, irreversible, safety, or rollback boundary | `SPLIT` or redefine the boundary | Open an event review for the new material delta |
+| New production, permission, authority, irreversible, safety, or rollback boundary | `SPLIT` or redefine the boundary | Record for the next permitted review; open an event review only if that mode is authorized |
 | No safe next action while waiting for a bounded non-user event | `PAUSE` | Use `BOUNDED_WAIT` |
 | Only a specific user action can continue the batch | `PAUSE` | Use `USER_WAIT` after checking existing authorization and owner capability |
 | Acceptance and claimed completion layer are proven and related findings are reconciled | `CLOSE` | Record the final completion layer and finding states |
@@ -62,7 +72,7 @@ Do not split merely because the batch has multiple owners, repositories, platfor
 
 ## Separate material delta from liveness
 
-Use material delta to decide whether to open a new event-review boundary. Treat these as material:
+In event-enabled mode, use material delta to decide whether to open a new event-review boundary. In timer-only mode, these facts inform the next scheduled snapshot. Treat these as material:
 
 - externally verifiable outcome changed;
 - shared acceptance boundary changed;
@@ -74,15 +84,15 @@ Use material delta to decide whether to open a new event-review boundary. Treat 
 
 Use the next observable checkpoint to decide whether existing work is alive. Every `ACTIVE_WORK` item must name the next fact expected from execution, not merely a vague duration. Examples include a completion packet, first stable failure, dependency response, integrated observation, or handoff decision.
 
-A tool call, commentary message, status poll, or support-mechanism retry is not fresh progress unless it produces a gate-relevant fact or reduces the declared dependency or unknown; otherwise it does not reset the last-material-progress clock. At a project-declared completion-ack deadline, retry-cap boundary, recurring cadence, or checkpoint, run one liveness-only recheck even without material delta. Reuse the gate-scoped Supervisor when one already owns a continuing review obligation. Otherwise use a fresh one-time read-only review, and keep it gate-scoped only if the result creates or confirms an obligation that crosses another review boundary.
+A tool call, commentary message, status poll, or support-mechanism retry is not fresh progress unless it produces a gate-relevant fact or reduces the declared dependency or unknown; otherwise it does not reset the last-material-progress clock. At a boundary permitted by the selected project mode, run one liveness-only recheck even without material delta; in timer-only mode deadlines and checkpoints are sampled at that timer, not scheduled separately. Reuse the gate-scoped Supervisor when one already owns a continuing review obligation. Otherwise use a fresh one-time read-only review, and keep it gate-scoped only if the result creates or confirms an obligation that crosses another review boundary.
 
-If the checkpoint passes:
+At the next review boundary permitted by the selected mode, if the checkpoint has passed:
 
 - fresh relevant execution fact: keep `ACTIVE_WORK` and set the next checkpoint;
 - no fresh fact and a safe next action exists: keep the batch, perform a liveness recheck, and use `YELLOW/STALLED` as appropriate;
 - no safe next action and a bounded external dependency remains: use `BOUNDED_WAIT`;
 - a specific user action is truly required: use `USER_WAIT`;
-- the outcome, acceptance, risk, authority, or completion claim changed: open an event review.
+- the outcome, acceptance, risk, authority, or completion claim changed: record the delta; open an event review only in event-enabled mode.
 
 Do not let “no material delta” hide a stall, and do not convert a liveness recheck into a new batch.
 
@@ -132,7 +142,7 @@ Sample code or evidence only when review coverage is missing, the conclusion con
 
 ## Reconcile supervisor findings at gate closure
 
-For every finding related to the closing gate, record exactly one result:
+Gate-close reconciliation records current authoritative facts, not an extra heartbeat or an Architect request for review. In timer-only mode the independent assessment remains on its existing cadence. For every finding related to the closing gate, record exactly one result:
 
 - `CLOSED`: one current closing fact proves the correction;
 - `SUPERSEDED`: one replacement fact or successor finding replaces the original issue;

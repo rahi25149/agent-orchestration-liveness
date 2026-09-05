@@ -5,10 +5,12 @@ description: Coordinate long-running or multi-agent work requiring Architect/Wor
 
 # Agent Orchestration Liveness
 
+当前用户与项目已声明的工作模式优先于本 Skill 的通用默认；独立安全底线、单一 authority、one writer/operator、UNKNOWN 不重发和 truthful completion 不变。模型名称、推理档与固定 cadence 留在项目或当前授权中，不在通用 Skill 另设一套。
+
 ## 保持角色与权威分离
 
 - **Architect** 是唯一业务权威：拥有目标、业务门、优先级、owner、派工、验证与复审预算、产品与架构裁决、集成和验收。Architect 只可为一个已声明的阻塞假设或原子集成动作临时直接执行；出现 first stable failure、范围扩张或 Worker 可接手时立即退出。
-- **Worker** 只拥有一个 bounded assignment 与其 write hotspot；在授权范围内自主执行，遇到 first stable failure 即停止并返回当前事实，不扩大范围，不夸大完成层。
+- **Worker** 只拥有一个 bounded assignment 与其 write hotspot；可在同一有界假设、授权与预算内连续调查、实现和必要验证。普通确定性离线源码或 construction 错误可在已授权 repair budget 内修正，不逐错终止回交；真实外部副作用的 first stable failure 停止，UNKNOWN 只读核对原 operation。相同失败的有界 repair 仍未收敛、没有新事实、预算耗尽或需要新假设、scope、契约、authority、拓扑时回交 Architect，不扩大范围、不无限返修、不夸大完成层。
 - **Supervisor** 是独立只读审计角色：检查 goal alignment、liveness、ownership、冲突、truthful completion 与浪费；不派工、不审批、不实现、不操作机器，也不成为第二 Architect 或常驻 technical reviewer。
 - **Controller** 若存在，只管理有界状态、liveness、transport 或内容无关指标；不选择业务任务、owner 或验证预算，不创作或修补业务 packet，不代收审批，不冒充用户。机械 transport 只能逐字传递 Architect 已完成的内容。
 
@@ -26,7 +28,9 @@ State card 只是索引，不是不可质疑的事实源。作出 material direc
 
 ## 组织 bounded work 与安全并发
 
-每个 Worker assignment 至少包含：assignment 与 gate、当前已证事实或首个未知、一个可外部核验 outcome、owner/hotspot、明确 exclusions、最小充分 acceptance、first-stable-failure 停止条件、semantic verification budget、next checkpoint 和 completion packet 要求。
+每个 Worker assignment 至少包含：assignment 与 gate、当前已证事实或首个未知、一个可外部核验 outcome、owner/hotspot、明确 exclusions、最小充分 acceptance、与动作性质相符的 repair/停止边界、semantic verification budget、next checkpoint 和 completion packet 要求。
+
+新任务仍须带最小授权与 owner 事实；同一任务已确认且未变化的 role、authorization、stop boundary 可用稳定引用加最小摘要，不每次复制完整制度。Packet/template 描述工作边界，不是每个工具调用的打卡。
 
 一个 outcome batch 只对应一个 externally verifiable outcome 与一个共享 pass/fail boundary。普通返修、technical review 和内部 owner handoff 留在同一 batch，除非外部 outcome 或 acceptance boundary 发生 material delta。
 
@@ -69,23 +73,25 @@ Completion packet 已可读但 delivery 状态不明时，视为结果已经收�
 
 低层证据不得暗示高层完成。Mock、simulator、unit test、process start 或 API response 不能自动证明真实设备、真实资金、真实用户流或完整业务结果。**TECH_CLEAR** 只覆盖声明的 scope、candidate 与 layer；依赖 browser、desktop、device 或 remote session 的高层声明，必须先有 representative real-surface evidence。
 
-Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返修、review、ACK、commit 与 re-dispatch 默认留在内部。仅在 objective/gate、material risk、真实 USER_WAIT/RED、用户声明的报告边界，或已证明的 user-visible completion 发生变化时更新用户；GREEN heartbeat 静默。同一事实不重复播报。
+Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返修、review、ACK、commit 与 re-dispatch 默认留在内部。仅在 objective/gate、material risk、真实 USER_WAIT/RED、用户声明的报告边界，或已证明的 user-visible completion 发生变化时更新用户；GREEN heartbeat 仅对外静默，Supervisor 自己任务中的规定快照仍必须输出。同一事实不重复播报。
 
 降噪不能压掉内部 truth：blocker、data anomaly、safety risk 和 inability to continue 必须立即到 Architect；一旦形成真实用户门、RED、material expectation change 或 decision need，再由 Architect 及时报告用户。
 
 ## 运行独立监督
 
-Heartbeat 与 liveness-only review 只在用户、项目或当前目标声明的 cadence/checkpoint、completion-ACK deadline 或 retry-cap boundary 运行；未声明 recurring cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。它保持原 batch，不自动成为 material event review 或新 finding。需要判断 OPEN finding 状态的 follow-up 属于一次 material review；若同时命中 liveness boundary，合并到该次 review，绝不另跑一次 liveness-only review。工具调用、commentary、同因支撑重试或状态轮询只有在产生 gate-relevant 新事实、减少声明的依赖或未知时，才重置 last-material-progress boundary。相关工作健康时保持静默。
+先选择当前用户/项目规定的 supervision mode。若是 timer-only，它排他生效：generic event、checkpoint、completion-ACK deadline、retry-cap 或 finding follow-up 不产生额外 review；这些事实仅供下一次既定 heartbeat 采样，Architect 不主动请求审查。动作 owner/executor 仍即时遵守独立安全 hard stop。下述事件与检查点默认只适用于项目允许的相应模式。
+
+Heartbeat 与 liveness-only review 只在用户、项目或当前目标声明的 cadence/checkpoint、completion-ACK deadline 或 retry-cap boundary 运行；未声明 recurring cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。它保持原 batch，不自动成为 material event review 或新 finding。需要判断 OPEN finding 状态的 follow-up 属于一次 material review；若同时命中 liveness boundary，合并到该次 review，绝不另跑一次 liveness-only review。工具调用、commentary、同因支撑重试或状态轮询只有在产生 gate-relevant 新事实、减少声明的依赖或未知时，才重置 last-material-progress boundary。相关工作健康时对 Architect 与用户静默，仍保留项目规定的本任务输出；配置 ACTIVE 不证明 scheduler 已真实触发。
 
 只有存在明确的跨 review-boundary 监督义务时，才维护一个 gate-scoped、read-only Supervisor，例如 OPEN finding、已声明的 recurring heartbeat/checkpoint、completion ACK 后续检查或 finding follow-up。预计耗时长、GUI/remote 或独占资源本身只提高风险，不单独触发持续 Supervisor。同一 gate 最多一个；其 epoch 只覆盖一个 gate、outcome batch 或 related finding cluster，并只持有不超过 2 KiB 的 Supervisor overlay：reviewed Architect revision、稳定 finding IDs/states、last gate-relevant progress、last review boundary 与 next supervision boundary。每次复核仍抽样最小当前事实，不复制完整 gate、业务计划、日志或 transcript。
 
-当 externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 发生 material change，出现 exclusive-resource conflict，或 OPEN finding 到达 next-check boundary 时，执行 material event review；已有 gate-scoped Supervisor 时复用它，不创建第二个，也不在 finding 与其紧邻复审之间轮换。没有跨边界持续义务的离散 event review 才使用 fresh、read-only、short-lived Supervisor，结果返回后结束线程。Gate close、暂停、真实 USER_WAIT、确无安全下一动作或监督价值结束时，先 reconcile findings，再结束 gate-scoped Supervisor。只有用户或当前业务权威明确决定迁移，或直接证据表明 Supervisor 的 role、project、revision、finding 或 communication continuity 已不可信且一次有界原地修复失败时，才在安全边界用 bounded overlay 做 Supervisor-to-Supervisor handoff。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
+仅在当前模式允许 event review 时，externally verifiable outcome、acceptance boundary、authority/risk boundary 或 claimed completion layer 的 material change、exclusive-resource conflict 或 OPEN finding 的 next-check boundary 才触发该审查；已有 gate-scoped Supervisor 时复用它，不创建第二个，也不在 finding 与其紧邻复审之间轮换。没有跨边界持续义务的离散 event review 才使用 fresh、read-only、short-lived Supervisor，结果返回后结束线程。目标关闭、用户明确暂停业务/监督或不再有持续监督价值时，reconcile findings 后停止监督；gate close 的事实收口不自行新增一次 review。临时 USER_WAIT、局部 transport 故障或一个 lane 无安全下一动作，不自动结束仍有效的 recurring 监督。只有用户或当前业务权威明确决定迁移，或直接证据表明 Supervisor 的 role、project、revision、finding 或 communication continuity 已不可信且一次有界原地修复失败时，才在安全边界用 bounded overlay 做 Supervisor-to-Supervisor handoff。普通 commit、test、same-batch repair、TECH result、owner handoff 或 integration preparation 不自动触发新 Supervisor。
 
 每个 actionable finding 使用稳定 ID，并保持 OPEN，直到一个当前事实把它变为 CLOSED 或 SUPERSEDED；复发创建新 finding。Architect disposition 只能是 ACCEPTED、PARTIALLY_ACCEPTED 或 REJECTED_WITH_EVIDENCE，它不是 finding state。Gate 关闭时不得让 OPEN finding 静默消失。
 
 Supervisor 只提供 advisory：
 
-- **GREEN**：目标一致、owner 清楚、声明真实或等待合理；保持静默。
+- **GREEN**：目标一致、owner 清楚、声明真实或等待合理；对外静默，保留 Supervisor 自己任务的规定快照。
 - **YELLOW**：首次漏接、方向偏差、无理由停滞、ownership/truthfulness 或 communication concern；通知 Architect 并设 response boundary，不自动暂停工程。
 - **RED**：同一 YELLOW 跨两个 review boundary 未解决、独占资源发生双控制，或新动作威胁生产、凭据、资金、数据完整性或不可恢复状态；只暂停受影响动作，其他安全工作继续。
 
@@ -103,7 +109,7 @@ Persisted Goal 若存在，是独立的 thread-scoped continuation contract，�
 
 保持 incumbent 的实际 route 与 effective least-privilege capability。Filesystem capability 不扩大业务 authorization。Controller 永远不是 approval reviewer，不点击、relay、转换或代用户批准；授权账本内普通动作应由 owning role 自主闭环。Fresh capability/profile mismatch 是 controller/setup defect，不是 USER_WAIT；approval 留下 untouched，并在安全边界纠正。只有真实红门才找用户。
 
-Continuity ACK 只建立 PROVISIONAL transfer。Prior role 保持 read-only、recoverable，直到 successor 关闭首个 clean comparable outcome 且无直接 handoff-linked regression；此后才接受 rotation。Capability/transport defect 不等于 role regression；普通实现缺陷也不得追溯成 handoff regression。
+Continuity ACK 只建立 PROVISIONAL transfer。Prior role 保持 read-only、recoverable，直到 successor 关闭首个 clean outcome 且无直接 handoff-linked regression；此后才确认 handoff。Capability/transport defect 不等于 role regression；普通实现缺陷也不得追溯成 handoff regression。
 
 不得把 active tool、external wait、新发现的必要事实、open-ended architecture analysis 或仍有有效输出的 bounded turn 判为 stall。只有 required reads 完成、无工具或外部结果在途、无结果/BLOCKED/新事实且 runtime watchdog 已过，才可触发恢复。
 
@@ -111,17 +117,18 @@ Context experiment 永远不是业务治理系统：metrics 必须 repository-ex
 
 ## 按触发条件完整读取 references
 
-当下列触发条件成立时，先完整读取对应 reference，再规划或执行；读取失败时返回精确 BLOCKED，不凭常识重建协议：
+首次进入下列相关模式、reference 已更新或当前上下文缺少必要内容时，先完整读取对应 reference 再行动；同一模式下已读且仍完整、当前有效的内容可复用，不因每个 dispatch、state delta 或 peer read 重载。缓存不能替代真正必要的当前事实检查；必要读取失败时返回精确 BLOCKED，不凭记忆或传闻重建协议：
 
-- 在规划、执行或修改 compaction、bounded state、fresh handoff/rotation、persisted Goal、runtime transport、permission/capability correction、context measurement、cohort 或 rollback 前，读取 [Context Lifecycle and Runtime Metrics](references/context-lifecycle-and-runtime-metrics.md)。
-- 在 opening/changing/pausing/splitting/closing outcome batch、ready-lane dispatch/re-dispatch、选择 concurrency/serialization、定义或复用 verification budget、执行 checkpoint-driven LIVENESS_RECHECK、进入 bounded Architect execution、判断 material Supervisor event 或 gate-close finding reconciliation 前，读取 [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md)。
+- 在实际设计/修改 context lifecycle、bounded-state 机制或执行 handoff、Goal 转权、continuity/permission 恢复前，读取 [Context Lifecycle](references/context-lifecycle-and-runtime-metrics.md)。普通 dispatch、小 state 更新、native peer read 与有效内容的复用不触发整份重读。
+- 只有用户明确授权的非关键、有业务成本上限的 context measurement、cohort、低层 App Server permission/writer 研究、compact hook，或关闭既有 measured operation 所必需的对应恢复，才另读 [Dormant Context Experiments](references/context-experiments.md)。普通运行不要求 cohort、metrics 或负向权限 probe；研究协议不授权创建或恢复实验。
+- 在 opening/changing/pausing/splitting/closing outcome batch、ready-lane dispatch/re-dispatch、选择 concurrency/serialization、定义或复用 verification budget、在所选 supervision mode 允许的边界执行 LIVENESS_RECHECK、进入 bounded Architect execution、判断允许的 material Supervisor event 或 gate-close finding reconciliation 前，读取 [Outcome Batching and Review Budget](references/outcome-batching-and-review-budget.md)。
 - 当 candidate 可能影响 protected semantic invariant，或准备、签发、消费、增量复核、判 stale 的 TECH_CLEAR/TECH_BLOCKED 前，读取 [Risk-Triggered Technical Review](references/technical-review-workflow.md)。普通低风险 NOT_REQUIRED 判断不要求重复加载。
 - 在给 browser、desktop、device、account 或 remote session 分配 executable owner、启动 helper/keepalive、首个 executable thin slice 形成后准备扩展第二条依赖分支、执行首个 representative real-surface probe、判断 interactive USER_WAIT，或 pause/fail/cleanup runtime 前，读取 [Interactive Runtime Lifecycle](references/interactive-runtime-lifecycle.md)。
 - 在长期 workflow 首次建立 intermediate user reporting、改变 reporting boundary、从内部 lifecycle 组成 cadence/milestone update、审计 communication health 或发 communication YELLOW 前，读取 [User Reporting Boundaries and Batching](references/user-reporting-boundaries.md)。
-- 在打开 material event review、创建或回应 actionable Supervisor finding、改变 finding state 或 gate-close reconciliation 前，读取 [Architect-Supervisor Exchange Templates](references/review-exchange-templates.md) 并使用相应 bounded form。普通健康 heartbeat 不加载完整模板。
+- 在当前 supervision mode 允许的 event review、actionable Supervisor finding/disposition、finding state 或 gate-close reconciliation 前，读取 [Architect-Supervisor Exchange Templates](references/review-exchange-templates.md) 并使用相应 bounded form。普通健康 heartbeat 不加载完整模板。
 
 ## 拒绝反模式并干净停止
 
 拒绝以下行为：把 busy/commit/test/thread count 当业务进展；用 state card 代替当前事实；无 checkpoint 的无限 ACTIVE_WORK；Supervisor 变成第二 Architect 或 routine reviewer；为每个 candidate 强制 review；重复测试、订单、真实动作或证明链；用低层结果宣称高层完成；无必要的 approval、report、hash、manifest、签名或固定回复；局部 blocker 冻结无关安全工作；快速轮询和 mid-task micromanagement。
 
-当 workflow 完成、用户暂停，或没有长期 target 时停止 heartbeat/monitor。返回最终 gate、最高 completion layer、任何未确认 handoff 与 OPEN finding；不要留下无目标的 recurring monitor。
+当监督目标完成、用户明确暂停业务/监督，或没有持续监督价值时停止 heartbeat/monitor；不把局部等待当作用户暂停。返回最终 gate、最高 completion layer、任何未确认 handoff 与 OPEN finding；不要留下无目标的 recurring monitor。

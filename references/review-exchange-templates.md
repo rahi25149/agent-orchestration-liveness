@@ -2,6 +2,10 @@
 
 Read this file for a critical event review or an actionable supervisor finding. These templates are a compact fact-exchange protocol, not a form for every heartbeat or work update. Keep entries short, omit optional fields that do not affect the assessment, and link to existing evidence instead of copying large logs or history.
 
+## Select the permitted exchange boundary
+
+These forms do not create review triggers. The current user/project mode takes precedence: in timer-only mode the Architect never initiates an event review, approval or progress consultation. The Supervisor uses actionable-finding forms only for facts found at its existing scheduled heartbeat; the Architect returns a disposition, not a request for an immediate re-review. GREEN remains in the Supervisor's own required snapshot, with no message to the Architect or user. Finding updates and gate-close reconciliation do not schedule a second review.
+
 ## Authority boundary
 
 - The architect owns goals, priorities, owners, risk acceptance, and the final action decision.
@@ -12,7 +16,7 @@ Read this file for a critical event review or an actionable supervisor finding. 
 
 ## Architect to supervisor: event review request
 
-Use this at a meaningful transition, not for routine activity:
+Use this only when the user/project explicitly permits Architect-initiated event review, at a meaningful transition rather than routine activity. It is disabled in timer-only mode:
 
 ```text
 REVIEW_KIND:
@@ -37,7 +41,7 @@ Choose a review kind that describes the transition, such as goal change, pre-ris
 
 ## Supervisor to architect: event review response
 
-For a healthy review with no actionable finding:
+Only in an event-enabled mode with a permitted exchange, a healthy review may use the following response. In timer-only mode keep GREEN in the Supervisor's own snapshot instead:
 
 ```text
 Level: GREEN
@@ -72,7 +76,7 @@ Treat this disposition as the architect's response, not as the finding state. Fi
 
 ## Finding update and closure
 
-When facts change before closure, send only the delta:
+When authoritative facts change before closure, record only the delta, and send it only where the selected exchange mode permits. A disposition or changed fact is not an immediate independent-review trigger:
 
 ```text
 Finding ID | Changed fact | Correction still applies: yes/no/partly | Next boundary
@@ -90,11 +94,11 @@ When a new fact or successor finding replaces the original issue, use:
 Finding ID | SUPERSEDED | Replacement fact or successor finding
 ```
 
-At a gate close, reconcile every related finding using [Outcome Batching and Review Budget](outcome-batching-and-review-budget.md). Leave an unresolved item explicitly `OPEN` with blocker, next-check boundary, and whether it blocks the claimed completion layer. Do not redefine the finding state machine in this template.
+At a gate close, record current finding facts without adding a heartbeat or requesting review; any independent reassessment remains on the declared cadence. Reconcile every related finding using [Outcome Batching and Review Budget](outcome-batching-and-review-budget.md). Leave an unresolved item explicitly `OPEN` with blocker, next-check boundary, and whether it blocks the claimed completion layer. Do not redefine the finding state machine in this template.
 
 ## When to use the exchange
 
-Use it for:
+Within the user/project's permitted review boundary, use the relevant form for:
 
 - a goal or gate transition;
 - a high-risk, irreversible, or externally consequential action;
