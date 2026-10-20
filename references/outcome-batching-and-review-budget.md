@@ -122,7 +122,7 @@ Raise `YELLOW` when the architect:
 - becomes the continuing implementation owner for the batch;
 - delays acknowledgements, dispatch, integration, or architecture decisions because of direct execution.
 
-Allow a small-team architect to switch roles sequentially, but require the same declared scope and exit conditions.
+Allow a small-team architect to switch roles sequentially only for the bounded exception above, not as a standing alternative to Worker implementation. At each engineering dispatch boundary, route work to a Worker or record that exception and its return-to-Worker boundary. Serial work, a small task, large context or familiarity alone does not qualify; do not concatenate exceptions into continuing implementation ownership.
 
 ## Consume technical review without duplicating it
 

@@ -4,6 +4,8 @@ This compatibility path contains the normal bounded-state and safe-handoff contr
 
 Normal work does not require experimental cohorts, metric events, capability-negative probes, App Server writer instrumentation, or hooks. Those unchanged research protocols are isolated in [Dormant Context Experiments](context-experiments.md), loaded only for explicitly authorized non-critical, cost-bounded research or the necessary safe closure/recovery of an already-open measured operation. Neither this link nor a policy edit authorizes starting or resuming an experiment.
 
+For project setup, adoption and ordinary continuation, use [Project Initialization and Resume](project-initialization.md). Resume the adopted agreement and existing state; do not treat a missing setup marker as a handoff, permission to replay work, or authority to activate a paused Goal. This lifecycle reference is required when actually changing state storage or transferring authority, not for every ordinary resume.
+
 ## Contents
 
 1. [Keep one authority and one overlay](#keep-one-authority-and-one-overlay)

@@ -1,11 +1,13 @@
 # Agent Orchestration Liveness
 
-This skill coordinates long-running architect-worker-supervisor workflows while keeping ownership, liveness, completion claims, user reporting, and independent supervision distinct. This README is an introduction, not a second authority: follow `SKILL.md`, the references it actually triggers, and the current user's/project's declared mode.
+This skill initializes and resumes Architect-led development with on-demand Workers, keeping ownership, liveness, completion claims and user reporting distinct. Independent supervision follows the selected project mode rather than being created by setup. This README is an introduction, not a second authority: follow `SKILL.md`, the references it actually triggers, and the current user's/project's declared mode.
 
 [中文说明](README.zh-CN.md)
 
 ## Normal operating path
 
+- **Initialize once, resume the agreement:** discover existing project rules and owners, ask only unresolved choices, and persist one small working agreement through the actual instruction entry. Adopt existing projects and resume interrupted setup without replacing their authority or repeating work.
+- **Architect-led implementation routing:** on-demand Workers implement ordinary engineering even when only one lane is ready. Distinguish configuration, an observed delegation loop, and the current assignment's routing; neither a setup marker nor one successful loop grants a permanent direct-execution exception.
 - **Outcome batches:** group work only when it serves one externally verifiable result and one shared pass/fail acceptance boundary.
 - **Mode-aware supervision:** a project-selected timer-only mode is exclusive; event/checkpoint defaults do not add reviews. GREEN remains in the Supervisor's own snapshot, silent externally.
 - **Risk-triggered technical review:** independently review protected semantics only when late-failure cost and independent discovery value justify the review; keep low-risk reversible work on the self-check fast path.
@@ -21,6 +23,7 @@ This skill coordinates long-running architect-worker-supervisor workflows while 
 ## File guide
 
 - `SKILL.md`: core roles, lifecycle, completion, reporting, and supervision rules.
+- `references/project-initialization.md`: first adoption, incremental setup, bounded questioning, persistent instruction entry, safe resume and per-assignment routing; no extra runtime or synthetic probe.
 - `references/outcome-batching-and-review-budget.md`: batch identity, material delta, elapsed checkpoints, bounded architect execution, technical-review handoff, and finding reconciliation.
 - `references/technical-review-workflow.md`: two-stage review trigger, bounded handoff, falsification check, `TECH_CLEAR` / `TECH_BLOCKED`, incremental re-review, freshness, and process-tax guardrails.
 - `references/interactive-runtime-lifecycle.md`: earliest real-surface probe, unique runtime ownership, task-owned continuity, authorization checks, `USER_WAIT`, and cleanup.

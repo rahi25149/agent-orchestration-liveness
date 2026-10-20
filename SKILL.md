@@ -1,11 +1,21 @@
 ---
 name: agent-orchestration-liveness
-description: Coordinate long-running or multi-agent work requiring Architect/Worker/Supervisor separation, bounded ownership, liveness, low-noise reporting, truthful completion, safe handoffs, agent-context lifecycle management or measurement, or orchestration of long-lived browser, desktop, device, or remote sessions. Do not use for short single-owner work, routine code review, standalone product planning, or one-off machine operation without orchestration needs.
+description: Initialize or resume ongoing development with an Architect and on-demand Workers, and coordinate long-running or multi-agent work requiring bounded ownership, liveness, low-noise reporting, truthful completion, independent supervision, safe handoffs, or long-lived browser, desktop, device, and remote sessions. Do not initialize projects for read-only advice, short single-owner work, routine code review, standalone product planning, or one-off machine operation without orchestration needs.
 ---
 
 # Agent Orchestration Liveness
 
 当前用户与项目已声明的工作模式优先于本 Skill 的通用默认；独立安全底线、单一 authority、one writer/operator、UNKNOWN 不重发和 truthful completion 不变。模型名称、推理档与固定 cadence 留在项目或当前授权中，不在通用 Skill 另设一套。
+
+## 先初始化，随后恢复选定模式
+
+持续研发项目采用本 Skill 时，默认建立 **Architect＋按需 Worker** 的持久工作约定，而非一次并行试运行。“按需”决定 Worker 的数量、专长和存续时间；常规工程实现归 Worker，即使当前只有一条串行 lane。初始化不自动建立 Supervisor、Controller、heartbeat、Worktree 或其他运行角色。
+
+首次采用、接入已有项目、补齐中断初始化，或模式／读取入口／派工能力发生变化时，完整读取 [Project Initialization and Resume](references/project-initialization.md)。先识别已有规则和 owner，再只补欠缺的决策与持久入口；不覆盖项目明确选定的其他模式，不因加载 Skill 自行取得项目权威。只读咨询或短单人任务不触发初始化。
+
+正常继续、新会话接续或压缩后，先读取项目现有模式约定与有界当前状态，消费已有 completion、保留在途 operation，再决定下一动作；已读且仍完整有效的 reference 可复用。不重复访谈、重建角色或重设 Goal；恢复工作模式不等于获准恢复已暂停的 Goal。
+
+分清“项目约定已配置”“真实委派闭环曾被观察”“当前 assignment 路由正确”。首次闭环不是永久合规证明：每个真实工程派工边界，Architect 必须委派 Worker，或按既有有界执行规则声明唯一目标、最小范围、停止条件与交回边界。“任务小”“当前串行”“熟悉代码”均不能单独成为包办理由。
 
 ## 保持角色与权威分离
 
@@ -16,7 +26,7 @@ description: Coordinate long-running or multi-agent work requiring Architect/Wor
 
 把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。低风险、可逆、局部可测的变更不建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
 
-编排复杂度必须匹配已证的协调或连续性风险。单 Agent、单 owner 且可有界闭合、无此类风险的任务，不因本 Skill 新增 Supervisor、Controller、heartbeat、handoff/rotation 或 context protocol；独立安全规则仍照常适用。
+编排复杂度必须匹配已证的协调或连续性风险。短小独立、单 owner 且可有界闭合的任务可不启用本 Skill；已采用 Architect＋Worker 的持续项目不能把每个下一小步重新解释为单人任务，以此取消分工。两种情况都不因本 Skill 新增无必要的 Supervisor、Controller、heartbeat、handoff/rotation 或 context protocol；独立安全规则仍照常适用。
 
 ## 维护最小当前事实
 
