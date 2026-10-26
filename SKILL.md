@@ -22,10 +22,12 @@ description: Initialize or resume ongoing development with an Architect, indepen
 - **Architect** 是唯一业务权威：拥有目标、业务门、优先级、owner、派工、验证与复审预算、产品与架构裁决、集成和验收。Architect 只可为一个已声明的阻塞假设或原子集成动作临时直接执行；出现 first stable failure、范围扩张或 Worker 可接手时立即退出。
 - **Worker** 只拥有一个 bounded assignment 与其 write hotspot；可在同一有界假设、授权与预算内连续调查、实现和必要验证。普通确定性离线源码或 construction 错误可在已授权 repair budget 内修正，不逐错终止回交；真实外部副作用的 first stable failure 停止，UNKNOWN 只读核对原 operation。相同失败的有界 repair 仍未收敛、没有新事实、预算耗尽或需要新假设、scope、契约、authority、拓扑时回交 Architect，不扩大范围、不无限返修、不夸大完成层。
 - **Supervisor** 是独立只读审计角色：检查 goal alignment、liveness、ownership、冲突、truthful completion 与浪费；不派工、不审批、不实现、不操作机器，也不成为第二 Architect 或常驻 technical reviewer。
-- **业务小黄鸭／Business Duck** 是项目专属的反驳式架构顾问：只给建议，不派工、不审批、不操作文件或环境。由 Architect 直接 send/read，与 Supervisor、Technical Reviewer 及 Controller 的编排顾问会话分离，不共享原始咨询历史。
+- **业务小黄鸭／Business Duck** 是项目专属的反驳式架构顾问：默认使用 ChatGPT 网页版的独立会话，并核验该会话实际选中的 Pro 推理模式；Codex 会话、内部子代理、同名角色或 Pro 订阅本身都不能冒充此能力。只给建议，不派工、不审批、不操作文件或环境。由 Architect 直接 send/read，与 Supervisor、Technical Reviewer 及 Controller 的编排顾问会话分离，不共享原始咨询历史。
 - **Controller** 若存在，只管理有界状态、liveness、transport 或内容无关指标；不选择业务任务、owner 或验证预算，不创作或修补业务 packet，不代收审批，不冒充用户。机械 transport 只能逐字传递 Architect 已完成的内容。
 
-完整模式的主要工程 Worker 与持续 Supervisor 必须是项目原生、用户可独立找到的会话；内置子代理只能承担允许的短期只读探查或一次性技术复核，不能冒充这些已选角色。业务小黄鸭按用户选定载体建立／绑定；普通 ChatGPT 会话与 Codex 项目任务不是同一种对象，不要求跨产品 projectId 相等，不静默替换载体。
+完整模式的 Architect、主要工程 Worker 与持续 Supervisor 应归属同一已核实工程，并集中在同一用户可见项目／分区；检查现任 Architect 的归属，不只给新角色绑定项目。显示分组不等于项目权限迁移，不能借整理会话移动源码、切换 Worktree、重建 Architect 或扩大目录权限。内置子代理只承担允许的短期只读探查或一次性技术复核。
+
+业务小黄鸭通过该工程的明确入口关联到 ChatGPT 网页会话，不要求 ChatGPT 与 Codex 的 projectId 相等；跨产品分组不支持时保留链接并说明限制。除非用户明确改选载体，不能用 Codex、Work 或其他推理档代替网页 Pro；网页访问或 Pro 选择不可验证时只报告该能力未就绪，不谎称已开通，也不冻结无关已授权工作。
 
 把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。不因单个低风险、可逆、局部可测的变更额外建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
 

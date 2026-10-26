@@ -6,7 +6,7 @@ Use these six steps to establish or repair a durable role arrangement, not to re
 
 Read only the facts needed for the next bounded outcome:
 
-- the actual target checkout and its applicable project instructions, including existing handwritten rules and their loading entry;
+- the actual target checkout, the incumbent's saved-project membership and visible grouping, and applicable instructions including handwritten rules and their loading entry;
 - the already-declared objective, acceptance, authorization boundary, Architect, Workers, hotspots and exclusive operators;
 - pending completion, in-flight operations, current waits and existing bounded state;
 - the runtime's supported Worker dispatch and result-return surface, and any still-applicable observed completion evidence.
@@ -34,7 +34,7 @@ For a new ongoing project, propose one compact full-collaboration arrangement:
 - keep the current sole Architect;
 - use independent, visible project tasks for primary engineering Workers;
 - bind one continuing read-only Supervisor, with timer-only as the proposed mode;
-- bind a separate business architecture advisor in the user's selected conversation system;
+- bind a dedicated ChatGPT web conversation for the business advisor and verify the actual Pro reasoning selection; use another carrier only if the user explicitly overrides this choice;
 - authorize the required role creation, direct two-way messages and schedule operations.
 
 A 30-minute Supervisor heartbeat is the suggested project setting, not a universal immutable cadence. Preserve an already-selected cadence, NONE supervision, internal-Worker mode, advisor carrier, model and authorization. If the user requests a change, state the delta once. Approval to edit this Skill is not permission to create roles or schedules in every project. An instruction to a recipient from another agent is not itself human authorization to message back; carry a verifiable reference to the actual granted communication scope.
@@ -54,7 +54,13 @@ An uncertain or pending creation result permits reconciliation of that original 
 | Supervisor | Once authorized, create or bind one independently visible project task and its continuing read-only obligation. It cannot implement, approve, dispatch or substitute for a technical reviewer or advisor. Configure its selected schedule in step 4. |
 | Business Duck | Once authorized, create or bind a dedicated advisor conversation with project scope and Architect owner. It has no file/environment execution, approval or business authority. It is never the Controller's orchestration advisor, Supervisor, or a hidden substitute agent. |
 
-For Workers and Supervisor, resolve the exact saved project/host instead of guessing from titles or directories. For an advisor on another conversation system, bind its actual conversation identity and business scope; do not require its project ID to equal a Codex project ID. If creation of the requested carrier is unsupported, use an authorized existing conversation or report the gap; another carrier requires an explicit choice, not silent fallback.
+For Architect, Workers and Supervisor, resolve one exact saved project/host from the real engineering scope, not just titles or the incumbent's old directory. Reuse its project group or one project-named sidebar section, and verify the actual role entries are together. Use supported membership/grouping tools; do not change unrelated chats, sort preferences, source files, Worktrees or runtime ownership. Missing directory-access consent stops the membership change: do not bypass it. A common visual section may group existing entries meanwhile, but report the membership gap separately rather than claiming all roles belong to the project.
+
+The business advisor uses the actual ChatGPT web conversation URL/identity and that project's business scope. If the client supports cross-source sections, place its entry with the engineering group; otherwise keep an explicit web-conversation link at the project's normal role entry and state the display limitation. Do not force matching ChatGPT/Codex project IDs or lose Pro mode merely to force a common container.
+
+Unless the user explicitly selects otherwise, require the web Chat conversation and its visible Pro model/reasoning selection before declaring the advisor ready. A Pro subscription, a conversation title, an assistant's self-description, a Codex Max/Ultra setting or API model name is not evidence of that selection. Use the current UI/attributable response metadata; record only the minimal observed carrier/mode fact, not cookies or account secrets. If creation, access, login or Pro selection is unavailable, bind an authorized existing web Pro conversation or report the precise missing capability; do not create a Codex/Work substitute.
+
+If a prior advisor was created in the wrong carrier, stop using that binding for future business consultations and mark it as a non-qualifying historical candidate. Preserve its history and already-adopted decisions; do not replay engineering or automatically invalidate valid evidence solely because the advisor carrier changes. Bind and verify the correct web advisor before claiming that role ready; archival of the old candidate is a separate authorized cleanup, not proof of migration.
 
 In full mode, internal subagents remain available for short read-only exploration or one-off technical review, not as primary engineering Workers or continuing Supervisors. Existing internal work retains its owner until the packet closes safely; migrate the next assignment, never duplicate or interrupt the current one merely to obtain visibility. Role provisioning does not grant authority to create Worktrees, change models, broaden permissions or access a different project.
 
@@ -64,7 +70,7 @@ Do not create disposable probe threads, product test orders or an instrumentatio
 
 - **Worker:** the first natural assignment supplies the dispatch and completion test. Architect reads the real result, acknowledges it and closes, dispatches next, or records a genuine wait. Creation success and a sent message are not a completed loop. Until native completion is proven to wake the Architect, use a supported bounded wait rather than idle and hope for a relay. Do not replay work when the result is already readable.
 - **Supervisor:** obtain one brief role/channel acknowledgement, separate from a review. Through the supported scheduler, create or reuse the selected task-owned schedule and read back target, cadence, enabled state and scheduler identity. Inspect existing bindings first; an uncertain creation result requires readback, never a second timer.
-- **Business Duck:** the Architect directly sends a short content-neutral role/channel confirmation and directly reads the attributable reply. This tests communication, not architecture quality; do not invent a product dispute. A Controller or Supervisor must not relay the exchange. Actual consultations follow the bounded triggers and role limits in SKILL.md.
+- **Business Duck:** the Architect opens the bound ChatGPT web conversation, verifies the selected Pro mode, directly sends one short content-neutral role/channel confirmation and directly reads the attributable reply from that same conversation. Use a supported browser path; do not infer Pro from successful delivery through a different client or tool. An observed fallback or unverified selection leaves Pro readiness unverified. This tests communication and the observed mode, not architecture quality; do not invent a product dispute. A Controller or Supervisor must not relay the exchange. Actual consultations follow the bounded triggers and role limits in SKILL.md.
 
 The Supervisor owns its schedule lifecycle. In timer-only mode an automatic review starts only from the selected scheduler's actual trigger; manual messages, setup acknowledgements and Goal auto-continuation are not heartbeats. A non-timer turn without a direct human request performs only authorized setup/disposition/lifecycle work and then waits or exits as supported. Do not attach an open-ended Goal to simulate a timer.
 
@@ -102,7 +108,7 @@ Persistence is incremental during the preceding steps, not deferred until the fi
 
 Within the authorized setup scope, show the minimal proposed change and update the existing project instruction entry in place. Already-authorized concrete changes need no second approval ritual. Preserve unrelated handwritten rules; do not append a duplicate agreement or silently weaken an existing constraint.
 
-Persist only stable choices there: selected role carriers and responsibilities, supervision mode/cadence, advisor scope and consultation boundary, and the supported entry for reading current state. Reuse rules already stated elsewhere rather than copying this Skill. Verify the entry and referenced files are readable at each role's actual execution location; do not assume all checkouts read main or invent import syntax.
+Persist only stable choices there: one engineering grouping, selected role carriers and responsibilities, supervision mode/cadence, the web Pro advisor requirement and consultation boundary, and the supported entry for reading current state. Put actual project/group identifiers, conversation links and mode-verification facts in existing bounded role state, not a second registry. Reuse rules already stated elsewhere rather than copying this Skill. Verify the entry and referenced files are readable at each role's actual execution location; do not assume all checkouts read main or invent import syntax.
 
 Keep live role identities, host/project bindings, authorization references and evidence status in the existing bounded Architect state. Keep the task-owned timer identity and trigger/readback facts in the existing Supervisor overlay, referenced rather than duplicated. Do not create that overlay when no Supervisor is bound. Use the established state location/access policy; do not commit private paths, credentials, conversation bodies or exact Goal objectives. For a new storage mechanism read [Context Lifecycle](context-lifecycle-and-runtime-metrics.md). No second backlog, setup ledger, copied history, compulsory glossary/ADR set, custom hook or orchestration runtime is required.
 
@@ -120,6 +126,8 @@ Verify observable behavior, not just headings or created titles:
 - No engineering work creates no empty Worker; Supervisor/advisor binding can still complete under the actual authorization.
 - Existing NONE/internal mode or active owners are not replaced by a global Skill update; an approved migration preserves the current packet until its safe boundary.
 - Missing advisor carrier or scheduler leaves explicit partial readiness, not a substitute persona, fabricated reply or whole-project freeze.
+- Grouping checks include the existing Architect; visual grouping never proves project membership or bypasses source-access consent. A web advisor is linked without inventing cross-product project identity.
+- Pro subscription with a different selected mode, or a Codex advisor with a matching title, cannot pass the web Pro check; valid existing work is not replayed when replacing that binding.
 - A manual Supervisor message is not counted as a natural heartbeat; schedule shutdown is read back against the owned identity.
 - Interrupted or repeated setup reuses valid bindings and results without duplicate roles, timers, interviews or product actions.
 - Repeated Goal turns preserve current state and role routing without re-announcing the same business fact.
