@@ -1,6 +1,6 @@
 # Project Initialization and Resume
 
-Use this reference to establish or repair the project's durable working agreement, not to redesign the product or install an orchestration framework. Read it on first adoption, interrupted setup, or a material change to the selected mode, loading entry, or delegation capability. Ordinary dispatch reuses the agreement and current state; it does not repeat setup.
+Use these six steps to establish or repair a durable role arrangement, not to redesign the product or install an orchestration framework. Read on first adoption, interrupted setup, or a material change to mode, role bindings, loading entry or direct communication. Ordinary dispatch reuses the agreement and current evidence; it does not repeat setup.
 
 ## 1. Discover before choosing a path
 
@@ -25,64 +25,101 @@ Choose the path from facts, not from the word "initialize":
 
 Read-only consultation, review, or an unrelated one-off task does not authorize project setup. A global Skill update does not authorize changing an active project's selected mode. If the current user explicitly requests a conflicting mode, surface the delta and apply the authorized change at a safe boundary; never silently override either instruction.
 
-## 2. Ask only unresolved choices
+## 2. Check capability and confirm only unresolved choices
 
-Repository structure, available tools, current rules and existing results are facts to inspect, not questions to outsource. Ask the user only about unresolved intent, scope, acceptance, cost preferences or new authority that would materially change the next outcome. Already-delegated implementation decisions remain with the Architect.
+Inspect the actual runtime before proposing actions: can it create and locate user-visible project tasks, send/read directly between the intended roles, return Worker completion, and configure/read back a task-owned schedule? Can it create the requested advisor conversation type, or bind an existing one? Read available tool contracts; do not invent APIs, infer another host's capabilities, or perform product writes to test them.
 
-Work in small rounds of questions whose prerequisites are settled. Give a recommendation and its meaningful tradeoff; do not ask a downstream question while its deciding fact or answer is still missing. Respect settled answers and existing authorization instead of asking for confirmation again.
+For a new ongoing project, propose one compact full-collaboration arrangement:
 
-Stop the interview when the working agreement and first relevant action are sufficiently defined. Do not traverse the whole product design, require a new roadmap, or collect every hypothetical future preference. An unresolved question freezes only the actions that depend on it.
+- keep the current sole Architect;
+- use independent, visible project tasks for primary engineering Workers;
+- bind one continuing read-only Supervisor, with timer-only as the proposed mode;
+- bind a separate business architecture advisor in the user's selected conversation system;
+- authorize the required role creation, direct two-way messages and schedule operations.
 
-## 3. Persist one small agreement through the real loading entry
+A 30-minute Supervisor heartbeat is the suggested project setting, not a universal immutable cadence. Preserve an already-selected cadence, NONE supervision, internal-Worker mode, advisor carrier, model and authorization. If the user requests a change, state the delta once. Approval to edit this Skill is not permission to create roles or schedules in every project. An instruction to a recipient from another agent is not itself human authorization to message back; carry a verifiable reference to the actual granted communication scope.
 
-Within the authorized setup scope, show the minimal proposed change and update the existing project instruction entry in place. If the user already authorized that concrete change, do not add a second approval ritual. Otherwise obtain the missing decision or write authorization. Preserve unrelated handwritten instructions; do not overwrite an existing file, append a second agreement, or silently weaken an existing constraint.
+Facts such as repository structure, available tools and existing results are yours to inspect. Ask only unresolved intent, scope, acceptance, cost preferences or new authority that changes the arrangement or first outcome. Use small rounds whose prerequisite facts are settled, with a recommendation and tradeoff. Stop once the arrangement and next action are sufficiently defined; do not interview the whole product or ask again about accepted choices.
 
-Keep only durable decisions there:
+## 3. Establish the selected roles at the right time
 
-- the selected Architect-led mode and normal implementation ownership;
-- the narrow direct-execution exception, by reference rather than duplicated rules;
-- how a continuing or newly assigned task locates the applicable instructions and existing bounded state;
-- project-specific choices that materially affect routing and are not already stated elsewhere.
+The Architect creates or binds roles using supported, authorized surfaces. Prefer a matching existing role to a duplicate. Confirm actual identity, carrier, host/project association, clear short title, role boundaries and the user's independent task entry; a title, state-card label or global catalog hit alone is insufficient. If the platform cannot expose the required evidence, leave that part unverified.
 
-Verify that the entry and any references actually exist and can be read through the selected runtime's supported loading path. A file placed where no task reads it is not an effective agreement; do not invent import syntax or assume every checkout reads main. If loading cannot be verified, report that gap rather than claiming durable adoption.
+An uncertain or pending creation result permits reconciliation of that original request, not a second creation or an alternate carrier. A pending setup handle is not a ready conversation identity and cannot receive business authority or a duplicate assignment.
 
-Use the existing state location and its access policy. Keep live role identities, grants, pending operations and other changing facts in bounded current state, not in the committed agreement. Do not publish private absolute paths, credentials or persisted Goal text as a project-wide pointer. If no state exists, establish only the minimal current state already required by the core Skill; use [Context Lifecycle](context-lifecycle-and-runtime-metrics.md) when creating or changing its storage mechanism. No second backlog, setup ledger, copied Skill, compulsory ADR/glossary set, timer, hook or custom runtime is required.
+| Role in full collaboration | Establishment and ownership |
+| --- | --- |
+| Architect | Retain the existing authority and Goal. Resolve ambiguity before dispatch; do not create a second Architect to make setup look complete. |
+| Engineering Worker | At the first real ready assignment, create or reuse a project-native, independently visible task. Provide the bounded packet and real project instructions. No empty Worker or synthetic business assignment is needed before work exists. |
+| Supervisor | Once authorized, create or bind one independently visible project task and its continuing read-only obligation. It cannot implement, approve, dispatch or substitute for a technical reviewer or advisor. Configure its selected schedule in step 4. |
+| Business Duck | Once authorized, create or bind a dedicated advisor conversation with project scope and Architect owner. It has no file/environment execution, approval or business authority. It is never the Controller's orchestration advisor, Supervisor, or a hidden substitute agent. |
 
-## 4. Distinguish configuration from actual use
+For Workers and Supervisor, resolve the exact saved project/host instead of guessing from titles or directories. For an advisor on another conversation system, bind its actual conversation identity and business scope; do not require its project ID to equal a Codex project ID. If creation of the requested carrier is unsupported, use an authorized existing conversation or report the gap; another carrier requires an explicit choice, not silent fallback.
 
-These are evidence distinctions, not a new state machine or per-turn reporting template:
+In full mode, internal subagents remain available for short read-only exploration or one-off technical review, not as primary engineering Workers or continuing Supervisors. Existing internal work retains its owner until the packet closes safely; migrate the next assignment, never duplicate or interrupt the current one merely to obtain visibility. Role provisioning does not grant authority to create Worktrees, change models, broaden permissions or access a different project.
 
-- **Project mode configured:** the authorized agreement is readable through its actual entry. This alone proves no delegation.
-- **Delegation observed:** a real bounded assignment produced a Worker completion that the Architect consumed, acknowledged and followed with closure, another dispatch, or a genuine wait. This proves that particular route and boundary, not every role or future assignment.
-- **Current assignment routed:** ordinary engineering is owned by a Worker, or the Architect has declared a qualifying direct-execution exception with the required exit conditions.
+## 4. Verify direct channels and configure the real timer
 
-If there is ready engineering work, dispatch the first natural bounded assignment using the existing batching, ownership, verification and completion rules. One Worker may investigate, implement, test and repair within that assignment; do not split it into agents per tool call. Reuse suitable existing Workers and create additional ones only for actual independent work. Task creation still follows the platform's authorization rules.
+Do not create disposable probe threads, product test orders or an instrumentation project. Use the selected roles themselves:
 
-There is no special bootstrap probe and no requirement to manufacture work. With no engineering task, stop at "configured"; absence of a sample is not a business blocker. While the first real Worker runs, normal work continues: do not wait for an "initialization pass" before allowing authorized independent progress. A Worker failure can still close the communication loop honestly; it does not prove business acceptance or reset the original attempt budget.
+- **Worker:** the first natural assignment supplies the dispatch and completion test. Architect reads the real result, acknowledges it and closes, dispatches next, or records a genuine wait. Creation success and a sent message are not a completed loop. Until native completion is proven to wake the Architect, use a supported bounded wait rather than idle and hope for a relay. Do not replay work when the result is already readable.
+- **Supervisor:** obtain one brief role/channel acknowledgement, separate from a review. Through the supported scheduler, create or reuse the selected task-owned schedule and read back target, cadence, enabled state and scheduler identity. Inspect existing bindings first; an uncertain creation result requires readback, never a second timer.
+- **Business Duck:** the Architect directly sends a short content-neutral role/channel confirmation and directly reads the attributable reply. This tests communication, not architecture quality; do not invent a product dispute. A Controller or Supervisor must not relay the exchange. Actual consultations follow the bounded triggers and role limits in SKILL.md.
 
-If genuine dispatch or result-return capability is unavailable or unverified, name the precise capability gap. Use supported native completion or a bounded native wait when available; do not silently substitute the Architect, a Controller relay, a fabricated Worker, or repeated polling. Architectural investigation and an independently justified bounded direct action may continue, but cannot be presented as delegation. Do not label a tool gap USER_WAIT unless the missing fact truly requires the user.
+The Supervisor owns its schedule lifecycle. In timer-only mode an automatic review starts only from the selected scheduler's actual trigger; manual messages, setup acknowledgements and Goal auto-continuation are not heartbeats. A non-timer turn without a direct human request performs only authorized setup/disposition/lifecycle work and then waits or exits as supported. Do not attach an open-ended Goal to simulate a timer.
 
-Classify any recovery by its real owner and next observable fact. An unavailable capability with no recovery event or condition is not BOUNDED_WAIT; report the concrete non-user blocker instead of inventing a deadline. A request for a new runtime or permission is a separate user decision, not automatic authority to change tools.
+A direct human request for status may receive a minimal read-only lookup and answer, identified as a manual observation, not a heartbeat or a full finding cycle. An explicit human request for an additional review is a scoped one-time override, never proof of natural scheduling or a cadence change. An Architect's routine message cannot grant that override.
 
-## 5. Resume safely and prevent drift
+On an authorized schedule change, pause or stop, address the same task-owned scheduler identity and read back the result. Unknown readback means stop/configuration unverified, not success; do not delete or disable another role's schedule. Goal lifecycle, scheduler lifecycle and scope-limited business waits are distinct. Technical capacity never expands the human authorization boundary.
 
-At continuation, first read the adopted agreement, then check current owners, pending results, in-flight operations and the gate. Consume existing results without rerunning them; preserve original operation identities and stop boundaries. UNKNOWN permits only readback of the original affected operation. A missing or stale setup marker never authorizes reassignment, replay, a second owner or cancellation.
+## 5. Observe natural execution without adding a startup gate
 
-Only then fill any necessary setup gap and choose the next action. Keep Goal lifecycle, authorization, models, branches, consumed budgets and fresh PASS evidence unchanged. Setup or resume is not authority transfer, Goal activation or handoff; a genuine transfer follows [Context Lifecycle](context-lifecycle-and-runtime-metrics.md) instead.
+Use compact per-role evidence in existing state, not a new global status machine:
 
-When business or Goal execution is explicitly paused, limit reconciliation to the readback and housekeeping that pause permits. Only the existing Architect may acknowledge or close an already-completed assignment, if permitted; doing so does not authorize a new dispatch, business mutation or Goal activation. A broader pause on messages or writes also applies to housekeeping.
+| Evidence | What it proves |
+| --- | --- |
+| MODE_CONFIGURED | The authorized working arrangement is adopted and readable, not that its roles have run. |
+| ROLE_BOUND | The actual selected role/conversation exists and its required association and visibility are verified. |
+| DIRECT_CHANNEL_VERIFIED | A real attributable direct reply or Worker result was received on this route. |
+| PENDING_NATURAL_OBSERVATION | The Worker awaits a real task, or a configured Supervisor awaits its first natural heartbeat. This is not a failure. |
+| UNAVAILABLE or UNVERIFIED | A specific capability is absent or its evidence is missing; name the affected action and what would resolve it. |
 
-At every actual engineering dispatch boundary, route implementation to a Worker or declare the existing bounded Architect exception: one blocking hypothesis or atomic integration target, minimal scope, stop condition and return-to-Worker boundary. Serial execution, a small task, large context or familiarity alone does not qualify. Do not concatenate exceptions into continuing implementation ownership.
+Record timer configuration readback separately from its first natural trigger. Do not wait for that first heartbeat before advancing authorized independent engineering, or label an artificial run a natural trigger. A Worker failure may still prove a communication loop; it does not prove business acceptance or reset its original repair budget. Later assignments still need correct routing.
 
-After each completion, use the existing close / dispatch / genuine-wait decision. Continuing work does not silently change the selected mode. Supervisor, Technical Reviewer and runtime operators retain their existing conditional activation rules; setup adds no review cadence or approval gate.
+Missing capabilities have bounded consequences:
+
+- **Worker channel missing:** do not silently implement as Architect, use Controller relay or replace the selected visible Worker with an internal agent. Independent architecture work and an already-permitted single bounded direct exception may continue; dependent implementation remains blocked.
+- **Supervisor missing:** report supervision unavailable, never GREEN or enabled. Ordinary authorized engineering continues unless the user explicitly made verified supervision a prerequisite; execution roles still enforce immediate safety stops.
+- **Advisor missing:** ordinary authorized work continues. Keep a decision that requires consultation explicitly unresolved until consultation or an authorized exception; do not fabricate a verdict or silently remove the consultation requirement.
+
+No gap authorizes low-level App Server transport, a new runtime, fake role identities or repeated polling. No known recovery event means no invented BOUNDED_WAIT deadline. Only a genuinely necessary user decision, login or permission is USER_WAIT.
+
+Return one concise setup result: preserved Architect/Goal, actual role bindings, channel evidence, timer readback versus natural trigger, pending natural work, and any capability gap with its affected scope. This is not a declaration that every role is running or that a product capability is complete.
+
+## 6. Persist once, then resume without rebuilding roles
+
+Persistence is incremental during the preceding steps, not deferred until the first Worker result or heartbeat. Make the accepted agreement readable before a real engineering dispatch, and record each binding as it becomes known; the natural observations update evidence later.
+
+Within the authorized setup scope, show the minimal proposed change and update the existing project instruction entry in place. Already-authorized concrete changes need no second approval ritual. Preserve unrelated handwritten rules; do not append a duplicate agreement or silently weaken an existing constraint.
+
+Persist only stable choices there: selected role carriers and responsibilities, supervision mode/cadence, advisor scope and consultation boundary, and the supported entry for reading current state. Reuse rules already stated elsewhere rather than copying this Skill. Verify the entry and referenced files are readable at each role's actual execution location; do not assume all checkouts read main or invent import syntax.
+
+Keep live role identities, host/project bindings, authorization references and evidence status in the existing bounded Architect state. Keep the task-owned timer identity and trigger/readback facts in the existing Supervisor overlay, referenced rather than duplicated. Do not create that overlay when no Supervisor is bound. Use the established state location/access policy; do not commit private paths, credentials, conversation bodies or exact Goal objectives. For a new storage mechanism read [Context Lifecycle](context-lifecycle-and-runtime-metrics.md). No second backlog, setup ledger, copied history, compulsory glossary/ADR set, custom hook or orchestration runtime is required.
+
+At continuation: read the agreement and bindings; reconcile current owners, pending completion and original in-flight operations; consume existing results or preserve atomic work; only then fill missing setup facts and choose the next action. UNKNOWN permits only readback of the affected original operation. A missing marker, ordinary commit or compact is not permission to recreate roles, repeat handshakes or reset budgets. Recheck only evidence invalidated by a relevant host, carrier, project, authorization or binding change.
+
+If business or Goal execution is paused, do only the readback/housekeeping that pause permits. Only the valid Architect may acknowledge or close an already-completed assignment when permitted; no new dispatch, business mutation or Goal activation follows from setup. A broader pause on messages or writes also applies. Genuine authority/Goal transfer follows Context Lifecycle; role setup does not authorize it.
+
+At each engineering boundary, route work to the selected Worker or declare one qualifying Architect exception with minimal scope, stop and return-to-Worker boundary. Do not concatenate exceptions into ongoing implementation. After completion apply the existing close/dispatch/wait decision, update the affected current facts and keep the selected mode. User-facing openings, progress and endings share the business reporting boundary in [User Reporting Boundaries](user-reporting-boundaries.md); auto-continuation and a timer configuration ACK are not new business progress.
 
 ## Minimal acceptance checks
 
-Use normal task evidence, not a new instrumentation project:
+Verify observable behavior, not just headings or created titles:
 
-- Repeating setup preserves the agreement, handwritten rules and owners without duplicate files or questions.
-- Interrupted setup or resume consumes existing results and protects in-flight work before any dispatch.
-- No engineering task produces no synthetic Worker or claimed delegation.
-- A natural assignment closes the Worker-to-Architect loop without treating it as a higher business completion layer.
-- The next assignment still uses Worker routing or an explicit bounded exception; the first successful loop is not a permanent exemption.
-- Missing capability is reported truthfully; project overrides, paused Goals and unrelated lanes remain respected.
+- New full-mode setup with ready work binds the selected roles and sends a real Worker assignment; no fake tasks or wait for the first heartbeat.
+- No engineering work creates no empty Worker; Supervisor/advisor binding can still complete under the actual authorization.
+- Existing NONE/internal mode or active owners are not replaced by a global Skill update; an approved migration preserves the current packet until its safe boundary.
+- Missing advisor carrier or scheduler leaves explicit partial readiness, not a substitute persona, fabricated reply or whole-project freeze.
+- A manual Supervisor message is not counted as a natural heartbeat; schedule shutdown is read back against the owned identity.
+- Interrupted or repeated setup reuses valid bindings and results without duplicate roles, timers, interviews or product actions.
+- Repeated Goal turns preserve current state and role routing without re-announcing the same business fact.

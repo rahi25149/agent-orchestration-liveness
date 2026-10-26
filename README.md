@@ -1,15 +1,16 @@
 # Agent Orchestration Liveness
 
-This skill initializes and resumes Architect-led development with on-demand Workers, keeping ownership, liveness, completion claims and user reporting distinct. Independent supervision follows the selected project mode rather than being created by setup. This README is an introduction, not a second authority: follow `SKILL.md`, the references it actually triggers, and the current user's/project's declared mode.
+This skill proposes and establishes an authorized project arrangement with one Architect, independent visible Workers, a selected Supervisor and a dedicated business architecture advisor. Existing project modes and in-flight owners are preserved until an authorized change. Role creation, direct communication and actual execution are separate evidence. This README is an introduction, not a second authority: follow `SKILL.md`, the references it actually triggers, and the current user's/project's declared mode.
 
 [中文说明](README.zh-CN.md)
 
 ## Normal operating path
 
-- **Initialize once, resume the agreement:** discover existing project rules and owners, ask only unresolved choices, and persist one small working agreement through the actual instruction entry. Adopt existing projects and resume interrupted setup without replacing their authority or repeating work.
-- **Architect-led implementation routing:** on-demand Workers implement ordinary engineering even when only one lane is ready. Distinguish configuration, an observed delegation loop, and the current assignment's routing; neither a setup marker nor one successful loop grants a permanent direct-execution exception.
+- **Six-step initialization:** discover the current scene; check capabilities and unresolved authorization; establish selected roles; verify direct channels; observe natural work/timer events; persist and resume. In authorized full mode, bind Supervisor and advisor at setup, but create a Worker only for real ready work. Do not wait for the first heartbeat to advance engineering.
+- **Architect-led implementation routing:** independent visible Workers implement ordinary engineering even when only one lane is ready. Short read-only exploration and one-off technical review may use internal subagents; they do not substitute for selected persistent roles. Neither a setup marker nor one successful loop grants a permanent direct-execution exception.
+- **Dedicated business advisor:** Architect directly consults the bound advisor for material design tradeoffs, not routine progress. Keep it separate from Supervisor and the Controller's orchestration advisor; missing carrier support never authorizes a fake substitute.
 - **Outcome batches:** group work only when it serves one externally verifiable result and one shared pass/fail acceptance boundary.
-- **Mode-aware supervision:** a project-selected timer-only mode is exclusive; event/checkpoint defaults do not add reviews. GREEN remains in the Supervisor's own snapshot, silent externally.
+- **Mode-aware supervision:** NONE does not fall through to checkpoint reviews. A selected timer-only mode uses the actual owned schedule, verified separately from its first natural trigger. GREEN remains in the Supervisor's own snapshot, silent externally.
 - **Risk-triggered technical review:** independently review protected semantics only when late-failure cost and independent discovery value justify the review; keep low-risk reversible work on the self-check fast path.
 - **Scoped review economics:** review one invariant or direct producer-consumer path, reuse valid Worker evidence, perform one falsification-oriented check, and keep unrelated work moving.
 - **Bounded continuous engineering:** investigate, implement and perform necessary checks within one hypothesis and the authorized repair budget; stop real-side-effect failures and never retry UNKNOWN results.
@@ -23,7 +24,7 @@ This skill initializes and resumes Architect-led development with on-demand Work
 ## File guide
 
 - `SKILL.md`: core roles, lifecycle, completion, reporting, and supervision rules.
-- `references/project-initialization.md`: first adoption, incremental setup, bounded questioning, persistent instruction entry, safe resume and per-assignment routing; no extra runtime or synthetic probe.
+- `references/project-initialization.md`: six-step setup/adoption, visible role binding, direct channels, owned timer lifecycle, capability gaps and safe resume; no synthetic business work or added orchestration runtime.
 - `references/outcome-batching-and-review-budget.md`: batch identity, material delta, elapsed checkpoints, bounded architect execution, technical-review handoff, and finding reconciliation.
 - `references/technical-review-workflow.md`: two-stage review trigger, bounded handoff, falsification check, `TECH_CLEAR` / `TECH_BLOCKED`, incremental re-review, freshness, and process-tax guardrails.
 - `references/interactive-runtime-lifecycle.md`: earliest real-surface probe, unique runtime ownership, task-owned continuity, authorization checks, `USER_WAIT`, and cleanup.

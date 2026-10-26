@@ -6,6 +6,8 @@ Read this reference when a long-running workflow needs a batch-boundary decision
 
 The user's/project's current supervision mode gates every Supervisor action, event, checkpoint and table below. In timer-only mode, only the declared timer initiates review: expired checkpoints, completion-ACK deadlines, retry caps, material changes and finding follow-ups are facts for the next scheduled heartbeat, never additional review triggers. The Architect must not send review requests. Owners/executors still obey independent safety hard stops immediately; risk-triggered technical review is a separate workflow, not a Supervisor approval gate.
 
+With NONE supervision or no selected supervision obligation, the Supervisor column and review fallbacks below are inactive. A Worker checkpoint does not create that obligation. The Architect still reconciles completion, ownership and liveness without creating an auditor.
+
 Temporary `USER_WAIT`, a local transport failure or one blocked lane does not end a recurring obligation that remains useful. GREEN stays in the Supervisor's own prescribed snapshot and is silent externally. Configuration marked ACTIVE is not proof that a scheduled heartbeat executed.
 
 ## Define one outcome batch
@@ -84,7 +86,7 @@ In event-enabled mode, use material delta to decide whether to open a new event-
 
 Use the next observable checkpoint to decide whether existing work is alive. Every `ACTIVE_WORK` item must name the next fact expected from execution, not merely a vague duration. Examples include a completion packet, first stable failure, dependency response, integrated observation, or handoff decision.
 
-A tool call, commentary message, status poll, or support-mechanism retry is not fresh progress unless it produces a gate-relevant fact or reduces the declared dependency or unknown; otherwise it does not reset the last-material-progress clock. At a boundary permitted by the selected project mode, run one liveness-only recheck even without material delta; in timer-only mode deadlines and checkpoints are sampled at that timer, not scheduled separately. Reuse the gate-scoped Supervisor when one already owns a continuing review obligation. Otherwise use a fresh one-time read-only review, and keep it gate-scoped only if the result creates or confirms an obligation that crosses another review boundary.
+A tool call, commentary message, status poll, or support-mechanism retry is not fresh progress unless it produces a gate-relevant fact or reduces the declared dependency or unknown; otherwise it does not reset the last-material-progress clock. At a boundary permitted by the selected project mode, run one liveness-only recheck even without material delta; in timer-only mode deadlines and checkpoints are sampled at that timer, not scheduled separately. Reuse the gate-scoped Supervisor when one already owns a continuing review obligation. Only an explicitly permitted one-time review with no continuing Supervisor uses a fresh read-only reviewer; keep it gate-scoped only if it establishes a continuing obligation. NONE or an unselected mode never falls through to creating a review.
 
 At the next review boundary permitted by the selected mode, if the checkpoint has passed:
 

@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration-liveness
-description: Initialize or resume ongoing development with an Architect and on-demand Workers, and coordinate long-running or multi-agent work requiring bounded ownership, liveness, low-noise reporting, truthful completion, independent supervision, safe handoffs, or long-lived browser, desktop, device, and remote sessions. Do not initialize projects for read-only advice, short single-owner work, routine code review, standalone product planning, or one-off machine operation without orchestration needs.
+description: Initialize or resume ongoing development with an Architect, independent visible Workers, a selected Supervisor and a business architecture advisor. Coordinate bounded ownership, direct communication, liveness, low-noise reporting, truthful completion and safe handoffs across long-running tasks or interactive sessions. Do not initialize projects for read-only advice, short single-owner work, routine code review, standalone product planning or one-off machine operation without orchestration needs.
 ---
 
 # Agent Orchestration Liveness
@@ -9,22 +9,27 @@ description: Initialize or resume ongoing development with an Architect and on-d
 
 ## 先初始化，随后恢复选定模式
 
-持续研发项目采用本 Skill 时，默认建立 **Architect＋按需 Worker** 的持久工作约定，而非一次并行试运行。“按需”决定 Worker 的数量、专长和存续时间；常规工程实现归 Worker，即使当前只有一条串行 lane。初始化不自动建立 Supervisor、Controller、heartbeat、Worktree 或其他运行角色。
+持续研发项目首次采用本 Skill 时，默认提出 **唯一 Architect＋独立可见 Worker＋独立 Supervisor＋业务小黄鸭** 的完整协作配置，确认尚未获得的创建、双向通信和定时授权后落实，而非只写角色名称。“按需”决定 Worker 的数量、专长和存续时间；有真实工程任务才创建或复用，常规工程实现归 Worker，即使当前只有一条串行 lane。Supervisor 和业务小黄鸭在完整模式获准后建立／绑定，不等待工程任务；不自动添加 Controller、Worktree 或其他运行角色。
 
-首次采用、接入已有项目、补齐中断初始化，或模式／读取入口／派工能力发生变化时，完整读取 [Project Initialization and Resume](references/project-initialization.md)。先识别已有规则和 owner，再只补欠缺的决策与持久入口；不覆盖项目明确选定的其他模式，不因加载 Skill 自行取得项目权威。只读咨询或短单人任务不触发初始化。
+首次采用、接入已有项目、补齐中断初始化，或模式／读取入口／角色绑定／直接通信能力发生变化时，完整读取 [Project Initialization and Resume](references/project-initialization.md)，按“识别现场→能力与授权→建立角色→直接往返→自然验证→持久恢复”执行。项目已明确选择内置 Worker、NONE 监督或其他模式时先沿用；变更须取得相应授权，不能用全局 Skill 更新覆盖它。只读咨询不启动配置，也不因加载 Skill 自行取得项目权威。
 
 正常继续、新会话接续或压缩后，先读取项目现有模式约定与有界当前状态，消费已有 completion、保留在途 operation，再决定下一动作；已读且仍完整有效的 reference 可复用。不重复访谈、重建角色或重设 Goal；恢复工作模式不等于获准恢复已暂停的 Goal。
 
-分清“项目约定已配置”“真实委派闭环曾被观察”“当前 assignment 路由正确”。首次闭环不是永久合规证明：每个真实工程派工边界，Architect 必须委派 Worker，或按既有有界执行规则声明唯一目标、最小范围、停止条件与交回边界。“任务小”“当前串行”“熟悉代码”均不能单独成为包办理由。
+分清“模式已配置”“独立角色已绑定／可见”“直接通信已验证”“自然工程闭环／定时触发已观察”与能力缺口，不笼统宣布全部角色已运行。首次心跳未到、暂无工程任务不阻塞已授权工作，也不制造探针；缺失能力只冻结真正依赖它的动作，不以内部代理、主线程代做或 Controller relay 冒充。首次闭环不是永久合规证明：每个真实工程派工边界必须委派 Worker，或声明唯一目标、最小范围、停止条件与交回边界的 Architect 有界例外。
 
 ## 保持角色与权威分离
 
 - **Architect** 是唯一业务权威：拥有目标、业务门、优先级、owner、派工、验证与复审预算、产品与架构裁决、集成和验收。Architect 只可为一个已声明的阻塞假设或原子集成动作临时直接执行；出现 first stable failure、范围扩张或 Worker 可接手时立即退出。
 - **Worker** 只拥有一个 bounded assignment 与其 write hotspot；可在同一有界假设、授权与预算内连续调查、实现和必要验证。普通确定性离线源码或 construction 错误可在已授权 repair budget 内修正，不逐错终止回交；真实外部副作用的 first stable failure 停止，UNKNOWN 只读核对原 operation。相同失败的有界 repair 仍未收敛、没有新事实、预算耗尽或需要新假设、scope、契约、authority、拓扑时回交 Architect，不扩大范围、不无限返修、不夸大完成层。
 - **Supervisor** 是独立只读审计角色：检查 goal alignment、liveness、ownership、冲突、truthful completion 与浪费；不派工、不审批、不实现、不操作机器，也不成为第二 Architect 或常驻 technical reviewer。
+- **业务小黄鸭／Business Duck** 是项目专属的反驳式架构顾问：只给建议，不派工、不审批、不操作文件或环境。由 Architect 直接 send/read，与 Supervisor、Technical Reviewer 及 Controller 的编排顾问会话分离，不共享原始咨询历史。
 - **Controller** 若存在，只管理有界状态、liveness、transport 或内容无关指标；不选择业务任务、owner 或验证预算，不创作或修补业务 packet，不代收审批，不冒充用户。机械 transport 只能逐字传递 Architect 已完成的内容。
 
-把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。低风险、可逆、局部可测的变更不建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
+完整模式的主要工程 Worker 与持续 Supervisor 必须是项目原生、用户可独立找到的会话；内置子代理只能承担允许的短期只读探查或一次性技术复核，不能冒充这些已选角色。业务小黄鸭按用户选定载体建立／绑定；普通 ChatGPT 会话与 Codex 项目任务不是同一种对象，不要求跨产品 projectId 相等，不静默替换载体。
+
+把普通代码复核、测试复核和缺陷裁决放入独立的 risk-triggered technical-review workflow。需要 independent review 时，reviewer 不得是 primary implementer；Technical reviewer 与 Supervisor 权限分离。不因单个低风险、可逆、局部可测的变更额外建立常驻 reviewer、heartbeat、Worktree 或 approval gate。
+
+实质产品／架构权衡、高成本方向选择或拟改变共享事实拓扑时，Architect 先形成暂定判断，再向已绑定业务小黄鸭提供最小事实、最强反例和一个问题；普通派工、进度、测试和 completion 不咨询。顾问只给 ADOPT／ADOPT_WITH_CHANGES／REJECT 与理由，最终决定和授权边界仍归 Architect／用户；同一问题无新事实不重复咨询。顾问不可用时明确缺口，不谎称咨询完成，不冻结无关工作；需要该反驳的方向不得未经裁决就当作已确定。
 
 编排复杂度必须匹配已证的协调或连续性风险。短小独立、单 owner 且可有界闭合的任务可不启用本 Skill；已采用 Architect＋Worker 的持续项目不能把每个下一小步重新解释为单人任务，以此取消分工。两种情况都不因本 Skill 新增无必要的 Supervisor、Controller、heartbeat、handoff/rotation 或 context protocol；独立安全规则仍照常适用。
 
@@ -85,13 +90,15 @@ Completion packet 已可读但 delivery 状态不明时，视为结果已经收�
 
 Architect 是用户沟通的压缩层。Worker 生命周期、普通测试、返修、review、ACK、commit 与 re-dispatch 默认留在内部。仅在 objective/gate、material risk、真实 USER_WAIT/RED、用户声明的报告边界，或已证明的 user-visible completion 发生变化时更新用户；GREEN heartbeat 仅对外静默，Supervisor 自己任务中的规定快照仍必须输出。同一事实不重复播报。
 
+开场、过程与 turn 结尾共用同一汇报边界；Goal 自动续接、wait 返回、收包和 turn 结束本身不触发报告，不把内部构建／测试阶段另命名成用户业务门。先与已有 last_user_visible_change 比较；宿主强制输出时遵守上位要求并给最短必要说明，不叠加同义开场或结尾。用户主动问进度照常回答；不为降噪省略内部收包或真实风险。
+
 降噪不能压掉内部 truth：blocker、data anomaly、safety risk 和 inability to continue 必须立即到 Architect；一旦形成真实用户门、RED、material expectation change 或 decision need，再由 Architect 及时报告用户。
 
 ## 运行独立监督
 
-先选择当前用户/项目规定的 supervision mode。若是 timer-only，它排他生效：generic event、checkpoint、completion-ACK deadline、retry-cap 或 finding follow-up 不产生额外 review；这些事实仅供下一次既定 heartbeat 采样，Architect 不主动请求审查。动作 owner/executor 仍即时遵守独立安全 hard stop。下述事件与检查点默认只适用于项目允许的相应模式。
+先落实用户／项目选定的 supervision mode。NONE 或尚未选择时，不创建 Supervisor 或定时器，不将 Worker checkpoint 自动转换成审查；Architect 正常收包与调度继续。完整模式的建议是一次确认的 timer-only 周期，建立与启停按初始化 reference 的真实调度路径执行。若是 timer-only，它排他生效：generic event、checkpoint、completion-ACK deadline、retry-cap 或 finding follow-up 不产生额外 review；这些事实仅供下一次既定 heartbeat 采样，Architect 不主动请求审查。动作 owner/executor 仍即时遵守独立安全 hard stop。
 
-Heartbeat 与 liveness-only review 只在用户、项目或当前目标声明的 cadence/checkpoint、completion-ACK deadline 或 retry-cap boundary 运行；未声明 recurring cadence 时，以当前 active assignment 的 next observable checkpoint 作为一次性 review boundary，不建立通用时间间隔。它保持原 batch，不自动成为 material event review 或新 finding。需要判断 OPEN finding 状态的 follow-up 属于一次 material review；若同时命中 liveness boundary，合并到该次 review，绝不另跑一次 liveness-only review。工具调用、commentary、同因支撑重试或状态轮询只有在产生 gate-relevant 新事实、减少声明的依赖或未知时，才重置 last-material-progress boundary。相关工作健康时对 Architect 与用户静默，仍保留项目规定的本任务输出；配置 ACTIVE 不证明 scheduler 已真实触发。
+Heartbeat 与 liveness-only review 只在已启用模式所声明的 cadence/checkpoint、completion-ACK deadline 或 retry-cap boundary 运行；仅当项目已经明确允许一次性 checkpoint/event review 且未声明 recurring cadence 时，才使用 active assignment 的 next observable checkpoint，不由 NONE 或未配置模式产生监督义务。它保持原 batch，不自动成为 material event review 或新 finding。需要判断 OPEN finding 状态的 follow-up 属于一次 material review；若同时命中 liveness boundary，合并到该次 review，绝不另跑一次 liveness-only review。工具调用、commentary、同因支撑重试或状态轮询只有在产生 gate-relevant 新事实、减少声明的依赖或未知时，才重置 last-material-progress boundary。相关工作健康时对 Architect 与用户静默，仍保留项目规定的本任务输出；配置 ACTIVE 不证明 scheduler 已真实触发。
 
 只有存在明确的跨 review-boundary 监督义务时，才维护一个 gate-scoped、read-only Supervisor，例如 OPEN finding、已声明的 recurring heartbeat/checkpoint、completion ACK 后续检查或 finding follow-up。预计耗时长、GUI/remote 或独占资源本身只提高风险，不单独触发持续 Supervisor。同一 gate 最多一个；其 epoch 只覆盖一个 gate、outcome batch 或 related finding cluster，并只持有不超过 2 KiB 的 Supervisor overlay：reviewed Architect revision、稳定 finding IDs/states、last gate-relevant progress、last review boundary 与 next supervision boundary。每次复核仍抽样最小当前事实，不复制完整 gate、业务计划、日志或 transcript。
 

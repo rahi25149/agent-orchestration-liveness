@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Orchestration Liveness"
-  short_description: "Initialize and resume Architect-led development workflows"
-  default_prompt: "Use $agent-orchestration-liveness to initialize or resume an Architect-led project with on-demand Workers, preserve existing authority and in-flight work, and keep real assignments, completion and next decisions connected without adding unnecessary roles or reviews."
+  short_description: "Set up visible roles, direct channels and safe continuity"
+  default_prompt: "Use $agent-orchestration-liveness to configure or resume a project with its Architect, independent visible Workers, selected Supervisor and dedicated business advisor; preserve in-flight work and distinguish role binding from verified communication and natural execution."

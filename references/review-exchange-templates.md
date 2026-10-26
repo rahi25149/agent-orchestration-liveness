@@ -6,6 +6,8 @@ Read this file for a critical event review or an actionable supervisor finding. 
 
 These forms do not create review triggers. The current user/project mode takes precedence: in timer-only mode the Architect never initiates an event review, approval or progress consultation. The Supervisor uses actionable-finding forms only for facts found at its existing scheduled heartbeat; the Architect returns a disposition, not a request for an immediate re-review. GREEN remains in the Supervisor's own required snapshot, with no message to the Architect or user. Finding updates and gate-close reconciliation do not schedule a second review.
 
+NONE or no selected supervision obligation means no Supervisor review or automatic finding exchange. Role/channel acknowledgements and scheduler setup are lifecycle work, not reviews or evidence of a natural heartbeat; verify the actual timer source under [Project Initialization and Resume](project-initialization.md). An architecture question belongs to the bound business advisor, not to these forms.
+
 ## Authority boundary
 
 - The architect owns goals, priorities, owners, risk acceptance, and the final action decision.

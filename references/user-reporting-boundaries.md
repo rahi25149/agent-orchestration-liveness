@@ -21,6 +21,10 @@ Merge internal facts into one current-state update only when they cross a user-r
 
 Use the outcome batch and material delta defined in [Outcome Batching and Review Budget](outcome-batching-and-review-budget.md) to decide whether a new user-reporting boundary exists. Same-batch repairs, technical reviews, tests, and internal owner handoffs do not create one automatically.
 
+The same boundary applies to openings, commentary and final text across turns. A Goal auto-continuation, wait return/timeout, completion ACK or turn end is not a fresh user request or business milestone. Do not end a healthy work turn merely to produce a progress report, then announce the same work again on continuation. Do not rename each build/test/review stage a new user gate. Answer an actual user status request normally; never suppress a required failure, risk or user decision.
+
+When the host requires a visible progress or closing message, follow that requirement using the shortest useful current fact, without an additional same-fact opening or recap. This is a scoped exception, not a promise of absolute silence or permission to ignore higher-priority output rules.
+
 ## Maintain only two reporting facts
 
 The architect keeps:
@@ -29,6 +33,8 @@ The architect keeps:
 - `last_user_visible_change`: the objective, gate, material risk, user dependency, or completion boundary last reported.
 
 Do not create a mandatory `pending_summary` queue. When a reporting boundary is reached, derive one summary from the current state card and the delta since `last_user_visible_change`.
+
+Before sending, compare the proposed fact with those two existing fields. After a real user-facing update, update them together in the existing state; a host-required no-change message must not invent a new business delta. Resume reads that same baseline, not an empty per-turn reporting history. Missing or stale state is a reason for one minimal readback, not permission to replay old success or wait messages.
 
 ## Classify each internal event
 

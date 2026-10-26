@@ -16,10 +16,12 @@ For project setup, adoption and ordinary continuation, use [Project Initializati
 
 Compaction is a context safety valve. It is not a workflow database and cannot make stale state correct.
 
-Keep two deliberately asymmetric role files outside the project repository:
+Keep deliberately asymmetric current state outside the project repository. Create state only for roles actually established; do not create a Supervisor overlay when supervision is NONE or no Supervisor is bound:
 
 - **Architect authority snapshot**: the current objective, gate, outcome batch, owners, hotspots, verified facts, authorization boundary, blockers, highest proven layer, next safe action, facts the next thread must not assume, and—when persisted Goal continuity is required—only the opaque Goal revision, lifecycle status, transfer state, declared budget scope, and ephemeral transfer-envelope reference.
 - **Supervisor overlay**: the Architect revision it reviewed, open findings, last gate-relevant progress, last event and communication-review boundaries, latest supervision delta, and the declared cadence, checkpoint, or next supervision action.
+
+Keep the selected role/channel bindings in the existing Architect state and the owned scheduler identity/readback in the Supervisor overlay; the business advisor binding records its actual carrier, conversation and scope, not its transcript or a second authority snapshot. Reuse these on ordinary resume; role creation and visibility/communication verification follow Project Initialization and Resume, not an experimental handoff.
 
 The Supervisor overlay must not copy the complete gate, owner map, or execution plan. It refers to the Architect revision and stores only independent supervision state.
 
